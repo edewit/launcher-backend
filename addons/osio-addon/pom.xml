@@ -43,7 +43,16 @@
       <groupId>io.fabric8.launcher</groupId>
       <artifactId>launcher-core-api</artifactId>
     </dependency>
-
+    <!--TODO: Remove these dependencies - BEGIN -->
+    <dependency>
+      <groupId>io.fabric8.launcher</groupId>
+      <artifactId>launcher-service-github-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8.launcher</groupId>
+      <artifactId>launcher-service-openshift-impl</artifactId>
+    </dependency>
+    <!--TODO: Remove these dependencies - END-->
     <dependency>
       <groupId>io.fabric8.launcher</groupId>
       <artifactId>launcher-addon</artifactId>
@@ -55,21 +64,11 @@
       <classifier>forge-addon</classifier>
       <scope>provided</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.jboss.forge.furnace.test</groupId>
-      <artifactId>furnace-test-harness</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.furnace.test</groupId>
-      <artifactId>arquillian-furnace-classpath</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-core</artifactId>
       <version>9.0.1.Final</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
@@ -85,16 +84,23 @@
       <groupId>io.fabric8</groupId>
       <artifactId>fabric8-project-utils</artifactId>
       <version>3.0.3</version>
+      <exclusions>
+        <exclusion>
+          <groupId>io.fabric8</groupId>
+          <artifactId>gitrepo-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.fabric8.forge</groupId>
       <artifactId>utils</artifactId>
       <version>2.3.90</version>
-    </dependency>
-    <dependency>
-      <groupId>org.kohsuke</groupId>
-      <artifactId>github-api</artifactId>
-      <version>1.85</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.forge.addon</groupId>
+          <artifactId>core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.auth0</groupId>
@@ -102,14 +108,10 @@
       <version>3.1.0</version>
     </dependency>
     <dependency>
-      <groupId>io.fabric8</groupId>
-      <artifactId>openshift-client</artifactId>
-      <version>3.0.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-client</artifactId>
       <version>4.0.0.Beta1</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

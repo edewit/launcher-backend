@@ -48,9 +48,11 @@ import static io.fabric8.forge.generator.AttributeMapKeys.GIT_URL;
  */
 public class GitHubRepoStep extends AbstractGitHubStep implements UIWizardStep {
     final transient Logger LOG = LoggerFactory.getLogger(this.getClass());
+
     @Inject
     @WithAttributes(label = "Organization", required = true, description = "The github organization to create this project inside")
     private UISelectOne<GitOrganisationDTO> gitOrganisation;
+
     @Inject
     @WithAttributes(label = "Repository", required = true, description = "The name of the new github repository")
     private UIInput<String> gitRepository;

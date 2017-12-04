@@ -57,6 +57,7 @@ public class GitHubImportRepoStep extends AbstractDevToolsCommand implements UIW
      * The name of the upstream repo
      */
     private String origin = "origin";
+
     /**
      * The default branch we make on creating repos
      */

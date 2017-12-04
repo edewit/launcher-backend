@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class NewProjectWizard implements UIWizard {
     private static final transient Logger LOG = LoggerFactory.getLogger(NewProjectWizard.class);
-    
+
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(this.getClass()).name("Fabric8: New Project").description("Generate your project from a booster").category(Categories.create(new String[]{"Openshift.io"}));

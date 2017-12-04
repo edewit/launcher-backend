@@ -32,6 +32,7 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 public class GitHubCloneStep extends GitCloneStep {
     @Inject
     private GitHubFacadeFactory gitHubFacadeFactory;
+
     private GitHubFacade github;
 
     public GitHubCloneStep() {

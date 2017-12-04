@@ -53,6 +53,7 @@ public class ChooseBoosterStep implements UIWizardStep {
     private UISelectOne<BoosterDTO> quickstart;
 
     private BoosterCatalog catalog;
+
     private Collection<Booster> boosters;
 
     @Override
@@ -61,7 +62,7 @@ public class ChooseBoosterStep implements UIWizardStep {
         this.catalog = catalogFactory.getCatalog(context);
         this.boosters = catalog.getBoosters();
 
-        Map<String,BoosterDTO> map = new HashMap<>();
+        Map<String, BoosterDTO> map = new HashMap<>();
         boolean customBoosterCatalog = hasCustomBoosterCatalog(context);
         for (Booster booster : boosters) {
             if (customBoosterCatalog || ValidBoosters.validRhoarBooster(booster)) {

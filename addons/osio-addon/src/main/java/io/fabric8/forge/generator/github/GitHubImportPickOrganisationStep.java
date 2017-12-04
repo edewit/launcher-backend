@@ -25,8 +25,6 @@ import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ACCOUNT;
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ORGANISATION;
@@ -36,7 +34,7 @@ import static io.fabric8.forge.generator.AttributeMapKeys.GIT_OWNER_NAME;
  * Lets the user select an organisation
  */
 public class GitHubImportPickOrganisationStep extends AbstractGitHubStep implements UIWizardStep {
-    final transient Logger LOG = LoggerFactory.getLogger(this.getClass());
+
     @Inject
     @WithAttributes(label = "Organization", required = true, description = "The github organisation to import repositories from")
     private UISelectOne<GitOrganisationDTO> gitOrganisation;

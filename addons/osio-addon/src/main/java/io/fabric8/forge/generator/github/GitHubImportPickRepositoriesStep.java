@@ -51,7 +51,9 @@ import static io.fabric8.forge.generator.keycloak.TokenHelper.getMandatoryAuthHe
  */
 public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep implements UIWizardStep {
     final transient Logger LOG = LoggerFactory.getLogger(this.getClass());
+
     protected Cache<String, Collection<GitRepositoryDTO>> repositoriesCache;
+
     @Inject
     @WithAttributes(label = "Repository name pattern", required = true, description = "The regex pattern to match repository names")
     private UISelectMany<GitRepositoryDTO> gitRepositoryPattern;
@@ -63,9 +65,13 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
     private KubernetesClientFactory kubernetesClientFactory;
 
     private GitHubFacade github;
+
     private Collection<GitRepositoryDTO> repositoryNames;
+
     private KubernetesClientHelper kubernetesClientHelper;
+
     protected Cache<String, List<NamespaceDTO>> namespacesCache;
+
     private List<NamespaceDTO> namespaces;
 
     public void initializeUI(final UIBuilder builder) throws Exception {
@@ -110,7 +116,7 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
         }
         Iterator<GitRepositoryDTO> it = value.iterator();
         String userNameSpace = Tenants.findDefaultUserNamespace(namespaces);
-        if (userNameSpace == null ) {
+        if (userNameSpace == null) {
             // Tenant not yet initialised properly!
             return;
         }
@@ -149,7 +155,7 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
         for (GitRepositoryDTO repo : values) {
             String id = repo.getId();
 
-            if (Strings.isNotBlank(id))  {
+            if (Strings.isNotBlank(id)) {
                 repositories.add(id);
             }
 /*

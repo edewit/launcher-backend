@@ -122,24 +122,34 @@ import static io.fabric8.project.support.BuildConfigHelper.createBuildConfig;
  */
 public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UICommand {
     protected static final String GITHUB_SCM_NAVIGATOR_ELEMENT = "org.jenkinsci.plugins.github__branch__source.GitHubSCMNavigator";
+
     protected static final String REGEX_SCM_SOURCE_FILTER_TRAIT_ELEMENT = "jenkins.scm.impl.trait.RegexSCMSourceFilterTrait";
 
     private static final transient Logger LOG = LoggerFactory.getLogger(CreateBuildConfigStep.class);
+
     protected Cache<String, List<NamespaceDTO>> namespacesCache;
+
     @Inject
     @WithAttributes(label = "Jenkins Space", required = true, description = "The space running Jenkins")
     private UISelectOne<String> jenkinsSpace;
+
     @Inject
     @WithAttributes(label = "Trigger build", description = "Should a build be triggered immediately after import?")
     private UIInput<Boolean> triggerBuild;
+
     @Inject
     @WithAttributes(label = "Add CI?", description = "Should we add a Continuous Integration webhooks for Pull Requests?")
     private UIInput<Boolean> addCIWebHooks;
+
     @Inject
     private CacheFacade cacheManager;
+
     private KubernetesClientHelper kubernetesClientHelper;
+
     private int retryTriggerBuildCount = 5;
+
     private boolean useUiidForBotSecret = true;
+
     private List<NamespaceDTO> namespaces;
 
     @Inject
@@ -297,8 +307,8 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
             if (project == null) { // if no project (only quickstart flow), we are in "import repo" flow
                 Object obj = attributeMap.get(AttributeMapKeys.GIT_CLONED_REPOS); // let's find the cloned repo directory
                 if ((obj != null) && (obj instanceof ArrayList)) {
-                    ArrayList<GitClonedRepoDetails> list = (ArrayList<GitClonedRepoDetails>)obj;
-                    for (GitClonedRepoDetails repoDetails: list) {
+                    ArrayList<GitClonedRepoDetails> list = (ArrayList<GitClonedRepoDetails>) obj;
+                    for (GitClonedRepoDetails repoDetails : list) {
                         if (repoDetails.getGitRepoName().equals(gitRepo.getRepoName())) {
                             File dir = repoDetails.getAttributes().getDirectory();
                             pom = new File(dir, "pom.xml");
@@ -743,7 +753,7 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
             }
             String resultText = convertEntityToText(response.getEntity());
             LOG.info("Got response code from Jenkins looking up credential: " + status + " message: " + message +
-                    " from URL: " + getUrl + extra + " result: " + resultText);
+                             " from URL: " + getUrl + extra + " result: " + resultText);
             if (status >= 200 && status < 300) {
                 return response;
             }
@@ -884,9 +894,9 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
         Document document = null;
         try {
             Response response = invokeRequestWithRedirectResponse(getUrl,
-                    target -> target.request(MediaType.TEXT_XML).
-                            header("Authorization", authHeader).
-                            get(Response.class));
+                                                                  target -> target.request(MediaType.TEXT_XML).
+                                                                          header("Authorization", authHeader).
+                                                                          get(Response.class));
             document = response.readEntity(Document.class);
             if (document == null) {
                 document = parseEntityAsXml(response.readEntity(String.class));
@@ -911,18 +921,18 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
         if (create) {
             try {
                 answer = invokeRequestWithRedirectResponse(createUrl,
-                        target -> target.request(MediaType.TEXT_XML).
-                                header("Authorization", authHeader).
-                                post(entity, Response.class));
+                                                           target -> target.request(MediaType.TEXT_XML).
+                                                                   header("Authorization", authHeader).
+                                                                   post(entity, Response.class));
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to create the GitHub Org Job at " + createUrl + ". " + e, e);
             }
         } else {
             try {
                 answer = invokeRequestWithRedirectResponse(getUrl,
-                        target -> target.request(MediaType.TEXT_XML).
-                                header("Authorization", authHeader).
-                                post(entity, Response.class));
+                                                           target -> target.request(MediaType.TEXT_XML).
+                                                                   header("Authorization", authHeader).
+                                                                   post(entity, Response.class));
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to update the GitHub Org Job at " + getUrl + ". " + e, e);
             }

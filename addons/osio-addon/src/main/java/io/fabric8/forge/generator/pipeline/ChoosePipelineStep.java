@@ -84,31 +84,45 @@ import static io.fabric8.kubernetes.api.KubernetesHelper.loadYaml;
 
 public class ChoosePipelineStep extends AbstractProjectOverviewCommand implements UIWizardStep {
     public static final String JENKINSFILE = "Jenkinsfile";
+
     private static final transient Logger LOG = LoggerFactory.getLogger(ChoosePipelineStep.class);
+
     private static final String DEFAULT_MAVEN_FLOW = "workflows/maven/CanaryReleaseStageAndApprovePromote.groovy";
+
     protected Cache<String, List<NamespaceDTO>> namespacesCache;
+
     protected Cache<String, CachedSpaces> spacesCache;
+
     @Inject
     @WithAttributes(label = "Pipeline", description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UISelectOne<PipelineDTO> pipeline;
+
     @Inject
     @WithAttributes(label = "Organization", required = true, description = "The organization")
     private UISelectOne<String> kubernetesSpace;
+
     @Inject
     @WithAttributes(label = "Space", description = "The space for the new app")
     private UIInput<String> labelSpace;
+
     @Inject
     @WithAttributes(label = "Override Jenkins and POM files", description = "Should we override Jenkins and POM files in all repositories?")
     private UIInput<Boolean> overrideJenkinsFile;
+
     @Inject
     private JenkinsPipelineLibrary jenkinsPipelineLibrary;
+
     @Inject
     private CacheFacade cacheManager;
+
     private KubernetesClientHelper kubernetesClientHelper;
+
     private String namespace = KubernetesHelper.defaultNamespace();
 
     private boolean hasJenkinsFile;
+
     private ArrayList<String> repositoryNames;
+
     private String organisation;
 
     @Inject
@@ -200,9 +214,9 @@ public class ChoosePipelineStep extends AbstractProjectOverviewCommand implement
         Map<Object, Object> attributeMap = context.getAttributeMap();
         Object obj = attributeMap.get(AttributeMapKeys.GIT_REPO_NAMES);
         if ((obj != null) && (obj instanceof ArrayList)) {
-            repositoryNames = (ArrayList<String>)obj;
+            repositoryNames = (ArrayList<String>) obj;
         }
-        organisation = (String)attributeMap.get(AttributeMapKeys.GIT_ORGANISATION);
+        organisation = (String) attributeMap.get(AttributeMapKeys.GIT_ORGANISATION);
         if (isImportRepositoryFlow(attributeMap)) { // we want to target import repo flow only
             // search if any jenkins files
             ArrayList<String> reposNameWithJenkinsFile = new ArrayList<>();
@@ -253,7 +267,7 @@ public class ChoosePipelineStep extends AbstractProjectOverviewCommand implement
     }
 
     private String formatRepoName(ArrayList<String> reposNameWithJenkinsFile) {
-        StringBuilder formattedRepos= new StringBuilder();
+        StringBuilder formattedRepos = new StringBuilder();
         formattedRepos.append("(");
         for (String repoName : reposNameWithJenkinsFile) {
             formattedRepos.append(repoName);
@@ -316,7 +330,7 @@ public class ChoosePipelineStep extends AbstractProjectOverviewCommand implement
                         if (Strings.isNullOrBlank(pipelineText)) {
                             status.warning(LOG, "Cannot copy the pipeline to the project as no pipeline text could be loaded!");
                         } else {
-                            if((isImportRepositoryFlow(attributeMap) && overrideJenkinsFile.getValue() == true)
+                            if ((isImportRepositoryFlow(attributeMap) && overrideJenkinsFile.getValue() == true)
                                     || isQuickstartFlow(attributeMap)) {
                                 // overrrideJenkinsFile is null for quickstart wizard flow
                                 // the user in import wizard flow has not opt out for the override
@@ -327,7 +341,7 @@ public class ChoosePipelineStep extends AbstractProjectOverviewCommand implement
                         }
                     }
                 }
-                if((isImportRepositoryFlow(attributeMap) && overrideJenkinsFile.getValue() == true)
+                if ((isImportRepositoryFlow(attributeMap) && overrideJenkinsFile.getValue() == true)
                         || isQuickstartFlow(attributeMap)) {
                     updatePomVersions(uiContext, status, basedir);
                 }
