@@ -16,6 +16,13 @@
  */
 package io.fabric8.forge.generator.pipeline;
 
+import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.project.support.GitUtils;
 import io.fabric8.project.support.UserDetails;
@@ -32,12 +39,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.jboss.forge.furnace.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  */

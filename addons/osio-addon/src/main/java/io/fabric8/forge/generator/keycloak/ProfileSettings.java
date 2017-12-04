@@ -16,6 +16,12 @@
  */
 package io.fabric8.forge.generator.keycloak;
 
+import java.io.IOException;
+import java.util.Map;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.forge.generator.AttributeMapKeys;
@@ -27,11 +33,6 @@ import io.fabric8.utils.URLUtils;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.util.Map;
 
 /**
  */

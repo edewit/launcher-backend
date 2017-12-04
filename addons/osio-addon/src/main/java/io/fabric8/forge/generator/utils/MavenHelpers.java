@@ -16,6 +16,8 @@
  */
 package io.fabric8.forge.generator.utils;
 
+import java.io.File;
+
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.generator.che.CheStackDetector;
 import io.fabric8.utils.Files;
@@ -23,8 +25,6 @@ import org.jboss.forge.addon.ui.context.UIContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-
-import java.io.File;
 
 /**
  */

@@ -16,12 +16,13 @@
  */
 package io.fabric8.forge.generator.utils;
 
-import io.fabric8.utils.DomHelper;
-import org.w3c.dom.Document;
-
-import javax.xml.transform.TransformerException;
 import java.io.File;
 import java.io.FileNotFoundException;
+
+import javax.xml.transform.TransformerException;
+
+import io.fabric8.utils.DomHelper;
+import org.w3c.dom.Document;
 
 /**
  */

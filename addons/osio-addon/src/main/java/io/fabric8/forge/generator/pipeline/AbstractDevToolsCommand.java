@@ -16,6 +16,11 @@
  */
 package io.fabric8.forge.generator.pipeline;
 
+import java.io.File;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.utils.Files;
@@ -31,10 +36,6 @@ import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UISelection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.util.Map;
 
 import static io.fabric8.forge.generator.AttributeMapKeys.PROJECT_DIRECTORY_FILE;
 

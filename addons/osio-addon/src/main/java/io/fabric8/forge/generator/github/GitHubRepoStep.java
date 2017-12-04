@@ -7,6 +7,14 @@
 
 package io.fabric8.forge.generator.github;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.cache.CacheFacade;
 import io.fabric8.forge.generator.git.GitOrganisationDTO;
 import io.fabric8.project.support.UserDetails;
@@ -27,13 +35,6 @@ import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ACCOUNT;
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ORGANISATION;

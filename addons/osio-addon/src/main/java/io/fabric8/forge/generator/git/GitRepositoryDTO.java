@@ -16,15 +16,15 @@
  */
 package io.fabric8.forge.generator.git;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.fabric8.utils.Strings;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHRepository;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.utils.Strings;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHRepository;
 
 import static io.fabric8.forge.generator.utils.StringHelpers.createdAtText;
 

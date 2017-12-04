@@ -16,10 +16,23 @@
  */
 package io.fabric8.forge.generator.quickstart;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.addon.utils.archetype.FabricArchetypeCatalogFactory;
 import io.fabric8.forge.generator.CommonSteps;
-import io.openshift.launchpad.ui.input.ProjectName;
-import io.openshift.launchpad.ui.input.TopLevelPackage;
+import io.fabric8.launcher.addon.ui.input.ProjectName;
+import io.fabric8.launcher.addon.ui.input.TopLevelPackage;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.jboss.forge.addon.dependencies.Coordinate;
@@ -46,18 +59,6 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.furnace.services.Imported;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 import static io.openshift.booster.Files.deleteRecursively;
 

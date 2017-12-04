@@ -16,12 +16,15 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.util.List;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.forge.generator.cache.CacheFacade;
 import io.fabric8.forge.generator.cache.CacheNames;
 import io.fabric8.forge.generator.kubernetes.KubernetesClientFactory;
 import io.fabric8.forge.generator.kubernetes.KubernetesClientHelper;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import org.infinispan.Cache;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -36,9 +39,6 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.List;
 
 import static io.fabric8.forge.generator.git.GitProvider.pickDefaultGitProvider;
 

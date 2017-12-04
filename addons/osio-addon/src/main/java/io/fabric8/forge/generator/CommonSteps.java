@@ -16,7 +16,6 @@
  */
 package io.fabric8.forge.generator;
 
-import io.fabric8.forge.generator.git.PickGitAccountForNewProjectStep;
 import io.fabric8.forge.generator.github.GitHubRepoStep;
 import io.fabric8.forge.generator.kubernetes.CreateBuildConfigStep;
 import io.fabric8.forge.generator.pipeline.ChoosePipelineStep;

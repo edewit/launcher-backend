@@ -16,14 +16,6 @@
  */
 package io.fabric8.forge.generator.github;
 
-import io.fabric8.forge.generator.git.EnvironmentVariablePrefixes;
-import io.fabric8.forge.generator.git.GitAccount;
-import io.fabric8.forge.generator.git.GitOrganisationDTO;
-import io.fabric8.forge.generator.git.GitRepositoryDTO;
-import io.fabric8.forge.generator.git.WebHookDetails;
-import io.fabric8.project.support.UserDetails;
-import io.fabric8.utils.Strings;
-import io.fabric8.utils.URLUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -39,7 +31,17 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
 import javax.ws.rs.core.MediaType;
+
+import io.fabric8.forge.generator.git.EnvironmentVariablePrefixes;
+import io.fabric8.forge.generator.git.GitAccount;
+import io.fabric8.forge.generator.git.GitOrganisationDTO;
+import io.fabric8.forge.generator.git.GitRepositoryDTO;
+import io.fabric8.forge.generator.git.WebHookDetails;
+import io.fabric8.project.support.UserDetails;
+import io.fabric8.utils.Strings;
+import io.fabric8.utils.URLUtils;
 import org.jboss.forge.addon.ui.context.UIValidationContext;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.kohsuke.github.GHContent;

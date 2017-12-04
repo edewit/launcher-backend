@@ -16,18 +16,19 @@
  */
 package io.fabric8.forge.generator.tenant;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.core.MediaType;
+
 import io.fabric8.forge.generator.utils.WebClientHelpers;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 import io.fabric8.utils.URLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static io.fabric8.forge.generator.EnvironmentVariables.getWitApiURL;
 

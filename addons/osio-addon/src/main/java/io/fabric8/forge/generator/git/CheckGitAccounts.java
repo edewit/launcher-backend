@@ -16,6 +16,9 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -26,9 +29,6 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A command which checks if we have a git account setup correctly

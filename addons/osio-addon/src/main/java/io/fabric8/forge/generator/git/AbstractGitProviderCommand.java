@@ -16,8 +16,11 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.util.List;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -32,9 +35,6 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.List;
 
 import static io.fabric8.forge.generator.git.GitProvider.pickDefaultGitProvider;
 

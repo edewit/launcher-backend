@@ -16,13 +16,13 @@
  */
 package io.fabric8.forge.generator.git;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.fabric8.utils.Strings;
-import org.kohsuke.github.GHOrganization;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.utils.Strings;
+import org.kohsuke.github.GHOrganization;
 
 import static io.fabric8.forge.generator.github.GitHubFacade.MY_PERSONAL_GITHUB_ACCOUNT;
 import static io.fabric8.forge.generator.utils.StringHelpers.createdAtText;

@@ -16,9 +16,9 @@
  */
 package io.fabric8.forge.generator.kubernetes;
 
-import io.fabric8.utils.Strings;
-
 import java.util.Base64;
+
+import io.fabric8.utils.Strings;
 
 /**
  */

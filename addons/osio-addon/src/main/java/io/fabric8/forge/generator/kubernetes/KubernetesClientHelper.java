@@ -16,26 +16,22 @@
  */
 package io.fabric8.forge.generator.kubernetes;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+
 import io.fabric8.forge.generator.EnvironmentVariables;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.KubernetesNames;
 import io.fabric8.kubernetes.api.extensions.Configs;
-import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.spaces.Space;
 import io.fabric8.kubernetes.api.spaces.Spaces;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.User;
-import io.fabric8.openshift.client.OpenShiftAPIGroups;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.utils.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
 
 /**
  */

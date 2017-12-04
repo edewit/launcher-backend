@@ -7,12 +7,21 @@
 
 package io.fabric8.forge.generator.quickstart;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
+import io.fabric8.launcher.addon.BoosterCatalogFactory;
 import io.openshift.booster.catalog.Booster;
 import io.openshift.booster.catalog.BoosterCatalog;
 import io.openshift.booster.catalog.Mission;
 import io.openshift.booster.catalog.Runtime;
-import io.openshift.launchpad.BoosterCatalogFactory;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -29,14 +38,6 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Provide a single list of boosters to pick from

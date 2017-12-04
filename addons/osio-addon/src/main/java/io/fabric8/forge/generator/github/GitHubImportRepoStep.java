@@ -16,6 +16,11 @@
  */
 package io.fabric8.forge.generator.github;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
+
 import io.fabric8.forge.generator.pipeline.AbstractDevToolsCommand;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Strings;
@@ -33,11 +38,6 @@ import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Map;
 
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ACCOUNT;
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_ORGANISATION;

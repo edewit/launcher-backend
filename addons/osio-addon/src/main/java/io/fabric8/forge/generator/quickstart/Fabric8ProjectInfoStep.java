@@ -16,16 +16,22 @@
  */
 package io.fabric8.forge.generator.quickstart;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import javax.enterprise.inject.Typed;
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.cache.CacheFacade;
 import io.fabric8.forge.generator.cache.CacheNames;
-import io.fabric8.forge.generator.git.GitAccount;
 import io.fabric8.forge.generator.git.GitOrganisationDTO;
 import io.fabric8.forge.generator.github.GitHubFacade;
 import io.fabric8.forge.generator.github.GitHubFacadeFactory;
 import io.fabric8.forge.generator.github.GitHubImportParameters;
+import io.fabric8.launcher.addon.ui.booster.ProjectInfoStep;
 import io.fabric8.utils.Strings;
-import io.openshift.launchpad.ui.booster.DeploymentType;
-import io.openshift.launchpad.ui.booster.ProjectInfoStep;
+import io.openshift.booster.catalog.DeploymentType;
 import org.infinispan.Cache;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -42,12 +48,6 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Typed;
-import javax.inject.Inject;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import static io.fabric8.forge.generator.git.AbstractGitRepoStep.getOrganisationName;
 import static io.fabric8.forge.generator.pipeline.AbstractDevToolsCommand.getSelectionFolder;

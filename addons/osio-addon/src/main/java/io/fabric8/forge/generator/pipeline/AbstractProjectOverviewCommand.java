@@ -16,15 +16,15 @@
  */
 package io.fabric8.forge.generator.pipeline;
 
-import io.fabric8.forge.addon.utils.StopWatch;
-import io.fabric8.utils.Files;
-import io.fabric8.utils.IOHelpers;
-import org.jboss.forge.addon.ui.context.UIContext;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.fabric8.forge.addon.utils.StopWatch;
+import io.fabric8.utils.Files;
+import io.fabric8.utils.IOHelpers;
+import org.jboss.forge.addon.ui.context.UIContext;
 
 /**
  */

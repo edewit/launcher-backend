@@ -16,10 +16,10 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.io.File;
+
 import io.fabric8.project.support.UserDetails;
 import org.eclipse.jgit.api.Git;
-
-import java.io.File;
 
 /**
  */

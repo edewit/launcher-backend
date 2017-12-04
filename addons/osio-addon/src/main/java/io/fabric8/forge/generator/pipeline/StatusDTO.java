@@ -16,11 +16,11 @@
  */
 package io.fabric8.forge.generator.pipeline;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.slf4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.slf4j.Logger;
 
 /**
  */

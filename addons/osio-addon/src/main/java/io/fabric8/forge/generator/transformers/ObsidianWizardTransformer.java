@@ -16,6 +16,10 @@
  */
 package io.fabric8.forge.generator.transformers;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import io.fabric8.forge.generator.CommonSteps;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
@@ -24,10 +28,6 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.result.navigation.NavigationResultTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  */

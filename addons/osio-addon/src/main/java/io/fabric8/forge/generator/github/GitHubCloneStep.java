@@ -16,15 +16,15 @@
  */
 package io.fabric8.forge.generator.github;
 
+import java.io.File;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.cache.CacheNames;
 import io.fabric8.forge.generator.git.CloneRepoAttributes;
 import io.fabric8.forge.generator.git.GitCloneStep;
 import io.fabric8.project.support.UserDetails;
 import org.jboss.forge.addon.ui.context.UIBuilder;
-
-import java.io.File;
-
-import javax.inject.Inject;
 
 /**
  * Performs a git clone of a repo via github

@@ -16,6 +16,10 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.fabric8.forge.generator.github.GitHubProvider;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -28,10 +32,6 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  */

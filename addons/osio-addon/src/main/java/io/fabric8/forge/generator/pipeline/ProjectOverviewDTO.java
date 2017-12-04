@@ -15,10 +15,10 @@
  */
 package io.fabric8.forge.generator.pipeline;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.Set;
 import java.util.TreeSet;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  */

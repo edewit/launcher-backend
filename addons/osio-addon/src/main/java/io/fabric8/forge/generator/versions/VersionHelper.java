@@ -15,13 +15,14 @@
  */
 package io.fabric8.forge.generator.versions;
 
-import io.fabric8.utils.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import io.fabric8.utils.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,11 +16,9 @@
  */
 package io.fabric8.forge.generator.utils;
 
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import javax.ws.rs.client.Client;
+
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
 /**
  */

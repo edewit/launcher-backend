@@ -16,9 +16,9 @@
  */
 package io.fabric8.forge.generator.git;
 
-import io.fabric8.project.support.UserDetails;
-
 import java.io.File;
+
+import io.fabric8.project.support.UserDetails;
 
 /**
  */

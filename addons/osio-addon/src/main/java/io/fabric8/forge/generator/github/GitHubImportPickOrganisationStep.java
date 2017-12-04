@@ -7,11 +7,13 @@
 
 package io.fabric8.forge.generator.github;
 
-import io.fabric8.forge.generator.git.GitOrganisationDTO;
-import io.fabric8.utils.Strings;
 import java.util.ArrayList;
 import java.util.Collection;
+
 import javax.inject.Inject;
+
+import io.fabric8.forge.generator.git.GitOrganisationDTO;
+import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;

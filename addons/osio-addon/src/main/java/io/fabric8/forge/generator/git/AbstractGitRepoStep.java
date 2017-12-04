@@ -16,6 +16,12 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+
+import javax.inject.Inject;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.generator.cache.CacheFacade;
@@ -35,11 +41,6 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
 
 /**
  */

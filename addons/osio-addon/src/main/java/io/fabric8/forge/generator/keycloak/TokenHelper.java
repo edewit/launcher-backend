@@ -16,13 +16,14 @@
  */
 package io.fabric8.forge.generator.keycloak;
 
-import io.fabric8.forge.generator.EnvironmentVariables;
-import io.fabric8.utils.Strings;
-import org.jboss.forge.addon.ui.context.UIContext;
+import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.util.List;
+
+import io.fabric8.forge.generator.EnvironmentVariables;
+import io.fabric8.utils.Strings;
+import org.jboss.forge.addon.ui.context.UIContext;
 
 /**
  */

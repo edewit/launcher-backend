@@ -16,10 +16,10 @@
  */
 package io.fabric8.forge.generator.tenant;
 
+import java.util.Date;
+
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
-
-import java.util.Date;
 
 /**
  * for listing spaces

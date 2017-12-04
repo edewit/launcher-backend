@@ -16,11 +16,11 @@
  */
 package io.fabric8.forge.generator.keycloak;
 
+import java.util.Map;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.ui.context.UIContext;
-
-import java.util.Map;
 
 /**
  */

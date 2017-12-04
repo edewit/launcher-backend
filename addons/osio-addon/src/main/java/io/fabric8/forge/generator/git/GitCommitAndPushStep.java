@@ -16,6 +16,10 @@
  */
 package io.fabric8.forge.generator.git;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.forge.generator.cache.CacheNames;
 import io.fabric8.project.support.UserDetails;
@@ -28,10 +32,6 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Performs a git add, commit and push on the given git repos

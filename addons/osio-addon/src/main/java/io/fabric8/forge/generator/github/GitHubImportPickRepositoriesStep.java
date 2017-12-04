@@ -7,6 +7,14 @@
 
 package io.fabric8.forge.generator.github;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.forge.generator.cache.CacheNames;
 import io.fabric8.forge.generator.git.GitRepositoryDTO;
@@ -33,12 +41,7 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Iterator;
+
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_REPOSITORY_PATTERN;
 import static io.fabric8.forge.generator.AttributeMapKeys.GIT_REPO_NAMES;
 import static io.fabric8.forge.generator.keycloak.TokenHelper.getMandatoryAuthHeader;
