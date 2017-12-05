@@ -76,7 +76,7 @@ public class CacheFacade {
 
     protected Configuration createCacheConfiguration(int cacheCount, int lifespanSeconds) {
         return new ConfigurationBuilder()
-                .memory().evictionType(EvictionType.COUNT).size(cacheCount).
+                .eviction().type(EvictionType.COUNT).size(cacheCount).
                         eviction().expiration().lifespan(lifespanSeconds, TimeUnit.SECONDS)
                 .build();
     }
