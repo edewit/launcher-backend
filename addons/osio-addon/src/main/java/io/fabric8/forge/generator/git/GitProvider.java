@@ -16,13 +16,10 @@
  */
 package io.fabric8.forge.generator.git;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.fabric8.forge.generator.github.GitHubProvider;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.project.support.GitUtils;
 import io.fabric8.project.support.UserDetails;
 import org.eclipse.jgit.api.CloneCommand;
@@ -50,16 +47,6 @@ public abstract class GitProvider {
 
         LOG.debug("Loaded git providers: " + answer);
         return answer;
-    }
-
-    protected static boolean hasService(KubernetesClient kubernetesClient, String namespace, String name) {
-        try {
-            Service service = kubernetesClient.services().inNamespace(namespace).withName(name).get();
-            return service != null;
-        } catch (Exception e) {
-            LOG.warn("Failed to find service " + namespace + "/" + name + ". " + e, e);
-            return false;
-        }
     }
 
     public static GitProvider pickDefaultGitProvider(List<GitProvider> gitProviders) {
@@ -91,8 +78,6 @@ public abstract class GitProvider {
     public abstract boolean isConfiguredCorrectly();
 
     public abstract void addConfigureStep(NavigationResultBuilder builder);
-
-    public abstract void registerWebHook(GitAccount details, WebHookDetails webhook) throws IOException;
 
     public Git cloneRepo(CloneRepoAttributes attributes) throws GitAPIException {
         CloneCommand command = Git.cloneRepository();

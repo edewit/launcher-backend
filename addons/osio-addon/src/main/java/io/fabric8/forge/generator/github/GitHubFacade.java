@@ -16,14 +16,9 @@
  */
 package io.fabric8.forge.generator.github;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,21 +27,16 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import javax.ws.rs.core.MediaType;
-
-import io.fabric8.forge.generator.git.EnvironmentVariablePrefixes;
 import io.fabric8.forge.generator.git.GitAccount;
 import io.fabric8.forge.generator.git.GitOrganisationDTO;
 import io.fabric8.forge.generator.git.GitRepositoryDTO;
-import io.fabric8.forge.generator.git.WebHookDetails;
+import io.fabric8.launcher.service.github.api.GitHubRepository;
+import io.fabric8.launcher.service.github.api.GitHubService;
+import io.fabric8.launcher.service.github.api.GitHubWebhookEvent;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Strings;
-import io.fabric8.utils.URLUtils;
 import org.jboss.forge.addon.ui.context.UIValidationContext;
 import org.jboss.forge.addon.ui.input.UIInput;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHCreateRepositoryBuilder;
-import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHHook;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHOrganization;
@@ -65,16 +55,16 @@ public class GitHubFacade {
     private static final transient Logger LOG = LoggerFactory.getLogger(GitHubFacade.class);
     public static final String MY_PERSONAL_GITHUB_ACCOUNT = "My personal github account";
     private final GitAccount details;
+
+    private final GitHubService gitHubService;
+
     private GHMyself myself;
 
     private GitHub github;
 
-    public GitHubFacade() {
-        this(GitAccount.createViaEnvironmentVariables(EnvironmentVariablePrefixes.GITHUB));
-    }
-
-    public GitHubFacade(GitAccount details) {
+    public GitHubFacade(GitAccount details, GitHubService gitHubService) {
         this.details = details;
+        this.gitHubService = gitHubService;
 
         String username = details.getUsername();
         String token = details.getToken();
@@ -146,19 +136,9 @@ public class GitHubFacade {
 
     public void validateRepositoryName(UIInput<String> input, UIValidationContext context, String orgName,
                                        String repoName) {
-        GitHub github = this.github;
-        if (github != null) {
-            String name = orgName + "/" + repoName;
-            try {
-                GHRepository repository = github.getRepository(name);
-                if (repository != null) {
-                    context.addValidationError(input, "The repository " + repoName + " already exists!");
-                }
-            } catch (FileNotFoundException e) {
-                // repo doesn't exist
-            } catch (IOException e) {
-                LOG.warn("Caught exception looking up github repository " + name + ". " + e, e);
-            }
+        boolean exists = gitHubService.repositoryExists(orgName + "/" + repoName);
+        if (exists) {
+            context.addValidationError(input, "The repository " + repoName + " already exists!");
         }
     }
 
@@ -199,21 +179,14 @@ public class GitHubFacade {
     }
 
     public boolean hasFile(String org, String repoName, String fileName) {
-        boolean hasFile = false;
-        GHContent content = null;
         try {
-            content = github.getRepository(org + "/" + repoName).getFileContent(fileName);
-            if (content != null) {
-                hasFile = true;
-            }
+            return github.getRepository(org + "/" + repoName).getFileContent(fileName) != null;
         } catch (IOException e) {
-            e.printStackTrace();
-            return hasFile;
+            return false;
         }
-        return hasFile;
     }
 
-    public GHMyself getMyself() {
+    private GHMyself getMyself() {
         if (myself == null) {
             try {
                 myself = this.github.getMyself();
@@ -228,7 +201,7 @@ public class GitHubFacade {
         return myself;
     }
 
-    public String getEmail() {
+    private String getEmail() {
         String email = details.getEmail();
         if (Strings.isNullOrBlank(email)) {
             GHMyself gitMyself = getMyself();
@@ -254,52 +227,26 @@ public class GitHubFacade {
         return details;
     }
 
-    public GHRepository createRepository(String orgName, String repoName, String description) throws IOException {
-        GHCreateRepositoryBuilder builder;
+    public GitHubRepository createRepository(String orgName, String repoName, String description) throws IOException {
         if (Strings.isNullOrBlank(orgName) || orgName.equals(details.getUsername())) {
-            builder = github.createRepository(repoName);
+            return gitHubService.createRepository(orgName, description);
         } else {
-            builder = github.getOrganization(orgName).createRepository(repoName);
+            return gitHubService.createRepository(orgName, repoName, description);
         }
-        // TODO link to the space URL?
-        builder.private_(false)
-                .homepage("")
-                .issues(false)
-                .downloads(false)
-                .wiki(false);
-
-        if (Strings.isNotBlank(description)) {
-            builder.description(description);
-        }
-        return builder.create();
     }
 
     public boolean isDetailsValid() {
         return details != null && GitAccount.isValid(details);
     }
 
-    public void createWebHook(WebHookDetails webhook) throws IOException {
-        String repoName = webhook.getRepositoryName();
-
-
-        String orgName = webhook.getGitOwnerName();
-        GHRepository repository = github.getRepository(orgName + "/" + repoName);
-        String webhookUrl = webhook.getWebhookUrl();
-
-        removeOldWebHooks(repository, webhookUrl);
-
-        Map<String, String> config = new HashMap<>();
-        config.put("url", webhookUrl);
-        config.put("insecure_ssl", "1");
-        config.put("content_type", "json");
-        config.put("secret", webhook.getSecret());
-        List<GHEvent> events = new ArrayList<>();
-        events.add(GHEvent.ALL);
-        GHHook hook = repository.createHook("web", config, events, true);
-        if (hook != null) {
-            LOG.info("Created WebHook " + hook.getName() + " with ID " + hook.getId() + " for " + repository.getFullName() + " on URL " + webhookUrl);
+    public void createWebHook(String repositoryName, URL webhookUrl) {
+        try {
+            removeOldWebHooks(github.getRepository(repositoryName), webhookUrl.toString());
+        } catch (IOException e) {
+            LOG.warn("Could not get repository: '" + repositoryName + "'", e);
         }
-        //registerGitWebHook(details, webhook.getWebhookUrl(), webhook.getGitOwnerName(), repoName, webhook.getSecret());
+        //TODO secret?
+        gitHubService.createWebhook(gitHubService.getRepository(repositoryName), webhookUrl, GitHubWebhookEvent.ALL);
     }
 
     private void removeOldWebHooks(GHRepository repository, String webhookUrl) {
@@ -324,49 +271,6 @@ public class GitHubFacade {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private void registerGitWebHook(GitAccount details, String webhookUrl, String gitOwnerName, String gitRepoName, String botSecret) throws IOException {
-
-        LOG.info("Creating webhook at " + webhookUrl);
-        // TODO move this logic into the GitProvider!!!
-        String body = "{\"name\": \"web\",\"active\": true,\"events\": [\"*\"],\"config\": {\"url\": \"" + webhookUrl + "\",\"insecure_ssl\":\"1\"," +
-                "\"content_type\": \"json\",\"secret\":\"" + botSecret + "\"}}";
-
-        String authHeader = details.mandatoryAuthHeader();
-        String createWebHookUrl = URLUtils.pathJoin("https://api.github.com/repos/", gitOwnerName, gitRepoName, "/hooks");
-
-        // JAX-RS doesn't work so lets use trusty java.net.URL instead ;)
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(createWebHookUrl);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Accept", MediaType.APPLICATION_JSON);
-            connection.setRequestProperty("Content-Type", MediaType.APPLICATION_JSON);
-            connection.setRequestProperty("Authorization", authHeader);
-            connection.setDoOutput(true);
-
-            OutputStreamWriter out = new OutputStreamWriter(
-                    connection.getOutputStream());
-            out.write(body);
-
-            out.close();
-            int status = connection.getResponseCode();
-            String message = connection.getResponseMessage();
-            LOG.info("Got response code from github " + createWebHookUrl + " status: " + status + " message: " + message);
-            if (status < 200 || status >= 300) {
-                LOG.error("Failed to create the github web hook at: " + createWebHookUrl + ". Status: " + status + " message: " + message);
-                throw new IllegalStateException("Failed to create the github web hook at: " + createWebHookUrl + ". Status: " + status + " message: " + message);
-            }
-        } catch (Exception e) {
-            LOG.error("Failed to create the github web hook at: " + createWebHookUrl + ". " + e, e);
-            throw e;
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
             }
         }
     }

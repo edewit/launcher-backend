@@ -16,17 +16,12 @@
  */
 package io.fabric8.forge.generator.github;
 
-import java.io.IOException;
-
-import io.fabric8.forge.generator.git.GitAccount;
 import io.fabric8.forge.generator.git.GitProvider;
-import io.fabric8.forge.generator.git.WebHookDetails;
 import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 
 /**
  */
 public class GitHubProvider extends GitProvider {
-    private boolean registerWebHooks = true;
 
     public GitHubProvider() {
         super("github");
@@ -57,11 +52,4 @@ public class GitHubProvider extends GitProvider {
         return true;
     }
 
-    @Override
-    public void registerWebHook(GitAccount details, WebHookDetails webhook) throws IOException {
-        if (registerWebHooks) {
-            GitHubFacade facade = new GitHubFacade(details);
-            facade.createWebHook(webhook);
-        }
-    }
 }

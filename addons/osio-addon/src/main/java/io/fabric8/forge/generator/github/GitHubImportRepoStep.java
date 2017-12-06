@@ -18,10 +18,11 @@ package io.fabric8.forge.generator.github;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 
 import io.fabric8.forge.generator.pipeline.AbstractDevToolsCommand;
+import io.fabric8.launcher.service.github.api.GitHubRepository;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -35,7 +36,6 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
-import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,21 +107,20 @@ public class GitHubImportRepoStep extends AbstractDevToolsCommand implements UIW
             return Results.fail("No project directory exists! " + basedir);
         }
 
-        String gitOwnerName = org;
+        //TODO duplicate code GitHubRepoStep
         String gitUrl = "https://github.com/" + orgAndRepo + ".git";
         String repoUrl = null;
         String gitHtmlUrl = null;
         try {
             //String gitRepoDescription = gitRepoDescription.getValue();
             String gitRepoDescription = "";
-            GHRepository repository = github.createRepository(org, repo, gitRepoDescription);
-            URL htmlUrl = repository.getHtmlUrl();
+            GitHubRepository repository = github.createRepository(org, repo, gitRepoDescription);
+            URI htmlUrl = repository.getHomepage();
             if (htmlUrl != null) {
                 gitHtmlUrl = htmlUrl.toString();
                 repoUrl = gitHtmlUrl;
                 gitUrl = repoUrl + ".git";
             }
-            gitOwnerName = repository.getOwnerName();
         } catch (IOException e) {
             LOG.error("Failed to create repository  " + orgAndRepo + " " + e, e);
             return Results.fail("Failed to create repository  " + orgAndRepo + " " + e, e);
@@ -132,7 +131,7 @@ public class GitHubImportRepoStep extends AbstractDevToolsCommand implements UIW
 
         LOG.info("Created repository: " + repoUrl);
         attributeMap.put(GIT_URL, gitUrl);
-        attributeMap.put(GIT_OWNER_NAME, gitOwnerName);
+        attributeMap.put(GIT_OWNER_NAME, org);
         attributeMap.put(GIT_ORGANISATION, org);
         attributeMap.put(GIT_REPO_NAME, repo);
         attributeMap.put(GIT_ACCOUNT, github.getDetails());
@@ -150,7 +149,7 @@ public class GitHubImportRepoStep extends AbstractDevToolsCommand implements UIW
             LOG.error("Failed to import project to " + gitUrl + " " + e, e);
             return Results.fail("Failed to import project to " + gitUrl + ". " + e, e);
         }
-        CreateGitRepoStatusDTO status = new CreateGitRepoStatusDTO(gitUrl, gitHtmlUrl, gitOwnerName, org, repo);
+        CreateGitRepoStatusDTO status = new CreateGitRepoStatusDTO(gitUrl, gitHtmlUrl, org, org, repo);
         return Results.success("Created git repository: " + repoUrl, status);
     }
 }

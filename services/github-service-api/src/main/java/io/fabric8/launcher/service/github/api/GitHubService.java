@@ -35,6 +35,18 @@ public interface GitHubService {
     GitHubRepository createRepository(String repositoryName, String description) throws IllegalArgumentException;
 
     /**
+     * Creates a repository with the given information (organisation, name and description). The repository will be
+     * created by default with no homepage, issues, wiki downloads and will be public.
+     *
+     * @param organisation   - the name of the organisation to create the repo in
+     * @param repositoryName - the name of the repository
+     * @param description    - the repository description
+     * @return the created {@link GitHubRepository}
+     * @throws IllegalArgumentException
+     */
+    GitHubRepository createRepository(String organisation, String repositoryName, String description) throws  IllegalArgumentException;
+
+    /**
      * Pushes to a repository. All files specified by the path will be added and pushed.
      *
      * @param repository - the repository to push to

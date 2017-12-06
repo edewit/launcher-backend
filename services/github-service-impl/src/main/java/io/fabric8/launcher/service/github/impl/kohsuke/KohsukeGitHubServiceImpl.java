@@ -34,6 +34,7 @@ import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.kohsuke.github.GHCreateRepositoryBuilder;
 import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHHook;
 import org.kohsuke.github.GHRepository;
@@ -150,11 +151,16 @@ public final class KohsukeGitHubServiceImpl implements GitHubService, GitHubServ
         return wrapped;
     }
 
+    public GitHubRepository createRepository(String repositoryName,
+                                             String description) throws IllegalArgumentException {
+        return createRepository(null, repositoryName, description);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public GitHubRepository createRepository(String repositoryName,
+    public GitHubRepository createRepository(String organisation, String repositoryName,
                                              String description) throws IllegalArgumentException {
         // Precondition checks
         if (repositoryName == null || repositoryName.isEmpty()) {
@@ -164,9 +170,15 @@ public final class KohsukeGitHubServiceImpl implements GitHubService, GitHubServ
             throw new IllegalArgumentException("repository description must be specified");
         }
 
-        GHRepository newlyCreatedRepo = null;
+        GHRepository newlyCreatedRepo;
         try {
-            newlyCreatedRepo = delegate.createRepository(repositoryName)
+            GHCreateRepositoryBuilder repositoryBuilder;
+            if (organisation != null) {
+                repositoryBuilder = delegate.getOrganization(organisation).createRepository(repositoryName);
+            } else {
+                repositoryBuilder = delegate.createRepository(repositoryName);
+            }
+            newlyCreatedRepo = repositoryBuilder
                     .description(description)
                     .private_(false)
                     .homepage("")
