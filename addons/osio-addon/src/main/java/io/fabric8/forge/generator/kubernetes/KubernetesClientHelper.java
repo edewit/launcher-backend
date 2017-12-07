@@ -49,33 +49,6 @@ public class KubernetesClientHelper {
     }
 
     /**
-     * Returns the current users kubernetes/openshift user name
-     */
-    public String getUserName() {
-        OpenShiftClient oc = getOpenShiftClientOrNull();
-        if (oc != null) {
-            User user = oc.users().withName("~").get();
-            if (user == null) {
-                LOG.warn("Failed to find current logged in user!");
-            } else {
-                String answer = KubernetesHelper.getName(user);
-                if (Strings.isNullOrBlank(answer)) {
-                    LOG.warn("No name for User " + user);
-                } else {
-                    return answer;
-                }
-            }
-        }
-
-        // TODO needs to use the current token to find the current user name
-        return Configs.currentUserName();
-    }
-
-    public OpenShiftClient getOpenShiftClientOrNull() {
-        return new Controller(kubernetesClient).getOpenShiftClientOrNull();
-    }
-
-    /**
      * Returns a unique key specific to the current user request
      */
     public String getUserCacheKey() {

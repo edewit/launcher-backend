@@ -146,8 +146,6 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
 
     private int retryTriggerBuildCount = 5;
 
-    private boolean useUiidForBotSecret = true;
-
     private List<NamespaceDTO> namespaces;
 
     @Inject
@@ -378,11 +376,6 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
                 throw new BadTenantException("Failed to find Jenkins URL in namespace " + discoveryNamespace);
             }
 
-            String botServiceAccount = "cd-bot";
-            String botSecret = findBotSecret(discoveryNamespace, botServiceAccount);
-            if (Strings.isNullOrBlank(botSecret)) {
-                botSecret = "secret101";
-            }
             String oauthToken = kubernetesClientHelper.getKubernetesClient().getConfiguration().getOauthToken();
             String authHeader = "Bearer " + oauthToken;
 
@@ -426,7 +419,7 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
             }
             // lets trigger the build
             Boolean triggerBuildFlag = triggerBuild.getValue();
-            if (openShiftClient != null && triggerBuildFlag != null && triggerBuildFlag.booleanValue()) {
+            if (openShiftClient != null && triggerBuildFlag != null && triggerBuildFlag) {
                 triggerBuild(openShiftClient, namespace, projectName);
             }
 
@@ -564,36 +557,6 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
                 LOG.error("Failed to trigger build for " + namespace + "/" + projectName + " due to: " + e, e);
             }
         }
-    }
-
-    /**
-     * Finds the secret token we should use for the web hooks
-     */
-    private String findBotSecret(String discoveryNamespace, String botServiceAccount) {
-        if (useUiidForBotSecret) {
-            return UUID.randomUUID().toString();
-        } else {
-            SecretList list = getKubernetesClientHelper().getKubernetesClient().secrets()
-                    .inNamespace(discoveryNamespace).list();
-            if (list != null) {
-                List<Secret> items = list.getItems();
-                if (items != null) {
-                    for (Secret item : items) {
-                        String name = KubernetesHelper.getName(item);
-                        if (name.startsWith(botServiceAccount + "-token-")) {
-                            Map<String, String> data = item.getData();
-                            if (data != null) {
-                                String token = data.get("token");
-                                if (token != null) {
-                                    return base64decode(token);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     /**
