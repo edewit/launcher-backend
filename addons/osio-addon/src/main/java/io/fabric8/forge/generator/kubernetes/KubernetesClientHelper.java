@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.extensions.Configs;
 import io.fabric8.kubernetes.api.spaces.Space;
 import io.fabric8.kubernetes.api.spaces.Spaces;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.launcher.service.openshift.api.OpenShiftService;
 import io.fabric8.openshift.api.model.User;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.utils.Strings;
@@ -40,8 +41,11 @@ public class KubernetesClientHelper {
 
     private final KubernetesClient kubernetesClient;
 
-    protected KubernetesClientHelper(KubernetesClient kubernetesClient) {
+    private final OpenShiftService openShiftService;
+
+    protected KubernetesClientHelper(KubernetesClient kubernetesClient, OpenShiftService openShiftService) {
         this.kubernetesClient = kubernetesClient;
+        this.openShiftService = openShiftService;
     }
 
     /**
@@ -117,6 +121,10 @@ public class KubernetesClientHelper {
             }
         }
         return answer;
+    }
+
+    public boolean hasBuildConfig(String namespace, String projectName) {
+        return openShiftService.hasBuildConfig(namespace, projectName);
     }
 
     public KubernetesClient getKubernetesClient() {

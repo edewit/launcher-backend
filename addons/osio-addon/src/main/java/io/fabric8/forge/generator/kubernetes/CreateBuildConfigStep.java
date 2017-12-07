@@ -288,8 +288,7 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
                 ensureCDGihubSecretExists(kubernetesClientHelper.getKubernetesClient(), namespace, gitOwnerName, gitToken);
             }
             try {
-                BuildConfig oldBC = openShiftClient.buildConfigs().inNamespace(namespace).withName(projectName).get();
-                if (oldBC != null && Strings.isNotBlank(KubernetesHelper.getName(oldBC))) {
+                if (kubernetesClientHelper.hasBuildConfig(namespace, projectName)) {
                     LOG.warn("Already created build " + namespace + "/" + projectName + " so returning");
                     return Results.fail("Already created BuildConfig " + namespace + "/" + projectName);
                 }

@@ -108,12 +108,7 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
         if (!value.iterator().hasNext()) {
             context.addValidationError(gitRepositoryPattern, "You must select a repository to import");
         }
-        // Check for repos with already existing bc
-        Controller controller = new Controller(kubernetesClientHelper.getKubernetesClient());
-        OpenShiftClient openShiftClient = controller.getOpenShiftClientOrNull();
-        if (openShiftClient == null) {
-            context.addValidationError(gitRepositoryPattern, "Could not create OpenShiftClient. Maybe the Kubernetes server version is older than 1.7?");
-        }
+
         Iterator<GitRepositoryDTO> it = value.iterator();
         String userNameSpace = Tenants.findDefaultUserNamespace(namespaces);
         if (userNameSpace == null) {
@@ -123,8 +118,7 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
         while (it.hasNext()) {
             GitRepositoryDTO repo = it.next();
             if (repo != null && repo.getName() != null) {
-                BuildConfig oldBC = openShiftClient.buildConfigs().inNamespace(userNameSpace).withName(repo.getName().toLowerCase()).get();
-                if (oldBC != null && Strings.isNotBlank(KubernetesHelper.getName(oldBC))) {
+                if (kubernetesClientHelper.hasBuildConfig(userNameSpace, repo.getName().toLowerCase())) {
                     context.addValidationError(gitRepositoryPattern, "The repository " + repo.getName() + " has already a build config, please select another repo.");
                     break;
                 }
@@ -158,20 +152,6 @@ public class GitHubImportPickRepositoriesStep extends AbstractGitHubStep impleme
             if (Strings.isNotBlank(id)) {
                 repositories.add(id);
             }
-/*
-            Pattern regex;
-            try {
-                regex = Pattern.compile(pattern);
-            } catch (Exception e) {
-                return Results.fail("Invalid regular expression `" + pattern + "` due to: " + e, e);
-            }
-
-            for (String repositoryName : repositoryNames) {
-                if (regex.matcher(repositoryName).matches()) {
-                    repositories.add(repositoryName);
-                }
-            }
-*/
         }
         String pattern = createPatternFromRepositories(repositories);
         uiContext.getAttributeMap().put(GIT_REPOSITORY_PATTERN, pattern);

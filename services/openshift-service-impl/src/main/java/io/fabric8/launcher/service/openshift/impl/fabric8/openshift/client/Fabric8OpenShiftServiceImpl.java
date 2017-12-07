@@ -41,6 +41,7 @@ import io.fabric8.openshift.api.model.RouteList;
 import io.fabric8.openshift.api.model.Template;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
+import io.fabric8.utils.Strings;
 
 /**
  * Implementation of the {@link OpenShiftService} using the Fabric8
@@ -311,6 +312,12 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
             // Should never happen
             throw new IllegalStateException("Malformed service URL: " + serviceURL, e);
         }
+    }
+
+    @Override
+    public boolean hasBuildConfig(final String namespace, final String projectName) {
+        BuildConfig buildConfig = client.buildConfigs().inNamespace(namespace).withName(projectName).get();
+        return buildConfig!= null && Strings.isNotBlank(KubernetesHelper.getName(buildConfig));
     }
 
     private Parameter createParameter(final String name, final String value) {

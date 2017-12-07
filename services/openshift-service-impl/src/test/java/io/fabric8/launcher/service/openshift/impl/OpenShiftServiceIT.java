@@ -237,6 +237,24 @@ public class OpenShiftServiceIT {
         }
     }
 
+    @Test
+    public void shouldGetBuildConfig() throws Exception {
+        // given
+        final OpenShiftProject project = triggerCreateProject(getUniqueProjectName());
+        final URI projectGitHubRepoUri = new URI("https://github.com/redhat-kontinuity/jboss-eap-quickstarts.git");
+        final URI pipelineTemplateUri = new URI(
+                "https://raw.githubusercontent.com/redhat-kontinuity/jboss-eap-quickstarts/kontinu8/helloworld/.openshift-ci_cd/pipeline-template.yaml");
+        final String gitRef = "kontinu8";
+
+
+        // when
+        openShiftService.configureProject(project, projectGitHubRepoUri, gitRef, pipelineTemplateUri);
+        boolean hasBuildConfig = openShiftService.hasBuildConfig(project.getName(), "helloworld-pipeline");
+
+        // then
+        assertThat(hasBuildConfig).isEqualTo(true);
+    }
+
     private String getUniqueProjectName() {
         return PREFIX_NAME_PROJECT + System.currentTimeMillis();
     }

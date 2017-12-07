@@ -112,4 +112,12 @@ public interface OpenShiftService {
      * @throws IllegalArgumentException if the URL cannot be found for the serviceName and project
      */
     URL getServiceURL(String serviceName, final OpenShiftProject project) throws IllegalArgumentException;
+
+    /**
+     * Return true if a build config was found for projectName in given namespace.
+     * @param namespace the namespace to look for the project
+     * @param projectName the name of the project to look for
+     * @return true if build config has been found for the project in the specified namespace
+     */
+    boolean hasBuildConfig(final String namespace, final String projectName);
 }
