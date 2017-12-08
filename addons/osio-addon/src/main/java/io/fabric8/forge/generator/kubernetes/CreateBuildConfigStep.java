@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 
 import javax.inject.Inject;
@@ -47,7 +46,6 @@ import javax.xml.transform.TransformerException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Objects;
 import io.fabric8.forge.generator.Annotations;
 import io.fabric8.forge.generator.AttributeMapKeys;
 import io.fabric8.forge.generator.cache.CacheFacade;
@@ -72,22 +70,14 @@ import io.fabric8.kubernetes.api.ServiceNames;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.DoneableConfigMap;
-import io.fabric8.kubernetes.api.model.DoneableSecret;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.openshift.api.model.Build;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.BuildConfigSpec;
-import io.fabric8.openshift.api.model.BuildRequest;
-import io.fabric8.openshift.api.model.BuildRequestBuilder;
 import io.fabric8.openshift.api.model.BuildStrategy;
 import io.fabric8.openshift.api.model.JenkinsPipelineBuildStrategy;
-import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.utils.DomHelper;
 import io.fabric8.utils.IOHelpers;
 import io.fabric8.utils.Strings;
@@ -112,7 +102,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import static io.fabric8.forge.generator.keycloak.TokenHelper.getMandatoryAuthHeader;
-import static io.fabric8.forge.generator.kubernetes.Base64Helper.base64decode;
 import static io.fabric8.project.support.BuildConfigHelper.createBuildConfig;
 
 /**
@@ -143,8 +132,6 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
     private CacheFacade cacheManager;
 
     private KubernetesClientHelper kubernetesClientHelper;
-
-    private int retryTriggerBuildCount = 5;
 
     private List<NamespaceDTO> namespaces;
 
@@ -253,10 +240,6 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
         KubernetesClientHelper kubernetesClientHelper = getKubernetesClientHelper();
         Controller controller = new Controller(kubernetesClientHelper.getKubernetesClient());
         controller.setNamespace(namespace);
-        OpenShiftClient openShiftClient = controller.getOpenShiftClientOrNull();
-        if (openShiftClient == null) {
-            return Results.fail("Could not create OpenShiftClient. Maybe the Kubernetes server version is older than 1.7?");
-        }
 
         String jenkinsJobUrl = null;
         String cheStackId = null;
@@ -283,7 +266,7 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
             }
 
             if (addCI && isGitHubOrganisationFolder) {
-                ensureCDGihubSecretExists(kubernetesClientHelper.getKubernetesClient(), namespace, gitOwnerName, gitToken);
+                kubernetesClientHelper.ensureCDGihubSecretExists(namespace, gitOwnerName, gitToken);
             }
             try {
                 if (kubernetesClientHelper.hasBuildConfig(namespace, projectName)) {
@@ -419,8 +402,8 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
             }
             // lets trigger the build
             Boolean triggerBuildFlag = triggerBuild.getValue();
-            if (openShiftClient != null && triggerBuildFlag != null && triggerBuildFlag) {
-                triggerBuild(openShiftClient, namespace, projectName);
+            if (triggerBuildFlag != null && triggerBuildFlag) {
+                kubernetesClientHelper.triggerBuild(namespace, projectName);
             }
 
             for (String gitRepoName : gitRepoNameList) {
@@ -486,77 +469,10 @@ public class CreateBuildConfigStep extends AbstractDevToolsCommand implements UI
     }
 
 
-    private void ensureCDGihubSecretExists(KubernetesClient kubernetesClient, String namespace, String gitOwnerName, String gitToken) {
-        String secretName = "cd-github";
-        String username = Base64Helper.base64encode(gitOwnerName);
-        String password = Base64Helper.base64encode(gitToken);
-        Secret secret = null;
-        Resource<Secret, DoneableSecret> secretResource = kubernetesClient.secrets().inNamespace(namespace).withName(secretName);
-        try {
-            secret = secretResource.get();
-        } catch (Exception e) {
-            LOG.warn("Failed to lookup secret " + namespace + "/" + secretName + " due to: " + e, e);
-        }
-        if (secret == null ||
-                !Objects.equal(username, getSecretData(secret, "username")) ||
-                !Objects.equal(password, getSecretData(secret, "password"))) {
-
-            try {
-                LOG.info("Upserting Secret " + namespace + "/" + secretName);
-                secretResource.createOrReplace(new SecretBuilder().
-                        withNewMetadata().withName(secretName).addToLabels("jenkins", "sync").addToLabels("creator", "fabric8").endMetadata().
-                        addToData("username", username).
-                        addToData("password", password).
-                        build());
-            } catch (Exception e) {
-                LOG.warn("Failed to upsert Secret " + namespace + "/" + secretName + " due to: " + e, e);
-            }
-        }
-    }
-
-    private static String getSecretData(Secret secret, String key) {
-        if (secret != null) {
-            Map<String, String> data = secret.getData();
-            if (data != null) {
-                return data.get(key);
-            }
-        }
-        return null;
-    }
-
     private void addWarning(List<String> warnings, String message, Exception e) {
         LOG.warn(message, e);
         // TODO add stack trace too?
         warnings.add(message);
-    }
-
-    protected void triggerBuild(OpenShiftClient openShiftClient, String namespace, String projectName) {
-        for (int i = 0; i < retryTriggerBuildCount; i++) {
-            if (i > 0) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-            }
-            String triggeredBuildName;
-            BuildRequest request = new BuildRequestBuilder().
-                    withNewMetadata().withName(projectName).endMetadata().
-                    addNewTriggeredBy().withMessage("Forge triggered").endTriggeredBy().
-                    build();
-            try {
-                Build build = openShiftClient.buildConfigs().inNamespace(namespace).withName(projectName).instantiate(request);
-                if (build != null) {
-                    triggeredBuildName = KubernetesHelper.getName(build);
-                    LOG.info("Triggered build " + triggeredBuildName);
-                    return;
-                } else {
-                    LOG.error("Failed to trigger build for " + namespace + "/" + projectName + " du to: no Build returned");
-                }
-            } catch (Exception e) {
-                LOG.error("Failed to trigger build for " + namespace + "/" + projectName + " due to: " + e, e);
-            }
-        }
     }
 
     /**
