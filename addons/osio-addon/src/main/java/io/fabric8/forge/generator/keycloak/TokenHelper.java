@@ -38,7 +38,7 @@ public class TokenHelper {
     }
 
     public static String getAuthHeader(UIContext context) {
-        String authToken = headerToString(context.getAttributeMap().get("authorization"));
+        String authToken = headerToString(context.getAttributeMap().get("Authorization"));
         if (Strings.isNullOrBlank(authToken)) {
             authToken = System.getenv(EnvironmentVariables.TESTING_OAUTH_HEADER);
         }
