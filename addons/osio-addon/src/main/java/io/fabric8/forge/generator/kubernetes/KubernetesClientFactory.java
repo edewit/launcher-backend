@@ -40,8 +40,11 @@ public class KubernetesClientFactory {
 
     private String getCluster() {
         String openShiftApiUrl = System.getenv(EnvironmentVariables.OPENSHIFT_API_URL);
-        String cluster = PATTERN.matcher(openShiftApiUrl).group(1);
-        return Strings.isNotBlank(cluster) ? cluster : null;
+        try {
+            return PATTERN.matcher(openShiftApiUrl).group(1);
+        } catch (IllegalStateException e) {
+            return null;
+        }
     }
 
     /**
