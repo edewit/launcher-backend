@@ -6,20 +6,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
-import javax.websocket.OnClose;
-import javax.websocket.OnOpen;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.Session;
 import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 import io.fabric8.launcher.base.JsonUtils;
 import io.fabric8.launcher.core.api.events.StatusEventType;
@@ -31,40 +30,31 @@ import io.fabric8.launcher.core.api.events.StatusMessageEvent;
  * https://abhirockzz.wordpress.com/2015/02/10/integrating-cdi-and-websockets/
  */
 @Dependent
-@ServerEndpoint(value = "/status/{uuid}")
+@Path(value = "/status")
 public class MissionControlStatusEndpoint {
     private static final Logger logger = Logger.getLogger(MissionControlStatusEndpoint.class.getName());
 
-    private static final Map<UUID, Session> peers = new ConcurrentHashMap<>();
-
     private static final Map<UUID, List<String>> messageBuffer = new ConcurrentHashMap<>();
 
-    @OnOpen
-    public void onOpen(Session session, @PathParam("uuid") String uuid) {
-        logger.info("WebSocket session opened using UUID: " + uuid);
-        UUID key = UUID.fromString(uuid);
-        peers.put(key, session);
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonArray init() {
         JsonArrayBuilder builder = Json.createArrayBuilder();
         for (StatusEventType statusEventType : StatusEventType.values()) {
             JsonObjectBuilder object = Json.createObjectBuilder();
             builder.add(object.add(statusEventType.name(), statusEventType.getMessage()).build());
         }
-
-        RemoteEndpoint.Async asyncRemote = session.getAsyncRemote();
-        asyncRemote.sendText(builder.build().toString());
-        // Send pending messages
-        List<String> messages = messageBuffer.remove(key);
-        if (messages != null) {
-            messages.forEach(asyncRemote::sendText);
-        }
+        return builder.build();
     }
 
-    @OnClose
-    public void onClose(@PathParam("uuid") String uuid) {
-        logger.info("WebSocket session closed using UUID: " + uuid);
+    @GET
+    @Path("/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> messages(@PathParam("uuid") String uuid) {
         UUID key = UUID.fromString(uuid);
-        peers.remove(key);
-        messageBuffer.remove(key);
+        List<String> messages = messageBuffer.remove(key);
+        return messages;
     }
 
     /**
@@ -75,14 +65,8 @@ public class MissionControlStatusEndpoint {
      */
     public void onEvent(@Observes StatusMessageEvent msg) throws IOException {
         UUID msgId = msg.getId();
-        Session session = peers.get(msgId);
         String message = JsonUtils.toString(msg);
-        if (session != null) {
-            session.getAsyncRemote().sendText(message);
-        } else {
-            List<String> messages = messageBuffer.computeIfAbsent(msgId, k -> new ArrayList<>());
-            messages.add(message);
-            logger.log(Level.FINE, "No active WebSocket session was found for projectile {0}", msgId);
-        }
+        List<String> messages = messageBuffer.computeIfAbsent(msgId, k -> new ArrayList<>());
+        messages.add(message);
     }
 }
