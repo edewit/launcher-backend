@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: s2i-nodejs-taskrun
+spec:
+  taskRef:
+    name: s2i
+  inputs:
+    params:
+    - name: BUILDER_IMAGE
+      value: docker.io/centos/nodejs-8-centos7
+    - name: TLSVERIFY
+      value: "false"
+    resources:
+    - name: source
+      resourceSpec:
+        type: git
+        params:
+        - name: url
+          value: https://github.com/edewit/nodejs-ex
+  outputs:
+    resources:
+    - name: image
+      resourceSpec:
+        type: image
+        params:
+        - name: url
+          value: docker-registry.docker-registry:5000/nodejs-s2i-ex

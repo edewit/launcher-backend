@@ -1,37 +1,9 @@
 package io.fabric8.launcher.service.openshift.impl;
 
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
-
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import io.fabric8.kubernetes.api.model.DoneableConfigMap;
 import io.fabric8.kubernetes.api.model.KubernetesList;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.RequestConfig;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.launcher.base.identity.Identity;
-import io.fabric8.launcher.base.identity.IdentityVisitor;
-import io.fabric8.launcher.base.identity.TokenIdentity;
-import io.fabric8.launcher.base.identity.UserPasswordIdentity;
 import io.fabric8.launcher.service.openshift.api.DuplicateProjectException;
 import io.fabric8.launcher.service.openshift.api.ImmutableOpenShiftResource;
 import io.fabric8.launcher.service.openshift.api.ImmutableOpenShiftUser;
@@ -40,7 +12,6 @@ import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
 import io.fabric8.launcher.service.openshift.api.OpenShiftService;
 import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
 import io.fabric8.launcher.service.openshift.api.OpenShiftUser;
-import io.fabric8.launcher.service.openshift.spi.OpenShiftServiceSpi;
 import io.fabric8.openshift.api.model.Build;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.BuildRequest;
@@ -53,14 +24,29 @@ import io.fabric8.openshift.api.model.ProjectRequest;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteList;
 import io.fabric8.openshift.api.model.Template;
-import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.dsl.TemplateResource;
+
+import javax.annotation.Nullable;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.logging.Level.FINEST;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.stripEnd;
 
 /**
@@ -70,23 +56,13 @@ import static org.apache.commons.lang3.StringUtils.stripEnd;
  * @author <a href="mailto:alr@redhat.com">Andrew Lee Rubinger</a>
  * @author <a href="mailto:xcoulon@redhat.com">Xavier Coulon</a>
  */
-public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, OpenShiftServiceSpi {
+public final class Fabric8OpenShiftServiceImpl extends BaseKubernetesService {
 
     private static final Logger log = Logger.getLogger(Fabric8OpenShiftServiceImpl.class.getName());
 
     private static final Pattern PARAM_VAR_PATTERN = Pattern.compile("\\{\\{(.*?)/(.*?)\\[(.*)\\]\\}\\}");
 
-    static {
-        // Avoid using ~/.kube/config
-        System.setProperty(Config.KUBERNETES_AUTH_TRYKUBECONFIG_SYSTEM_PROPERTY, "false");
-        // Avoid using /var/run/secrets/kubernetes.io/serviceaccount/token
-        System.setProperty(Config.KUBERNETES_AUTH_TRYSERVICEACCOUNT_SYSTEM_PROPERTY, "false");
-    }
-
-    private final OpenShiftClient client;
-
-    @Nullable
-    private final URL consoleUrl;
+    private final OpenShiftClient openShiftClient;
 
     /**
      * Creates an {@link OpenShiftService} implementation communicating
@@ -95,39 +71,16 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
      * @param parameters
      */
     Fabric8OpenShiftServiceImpl(final OpenShiftServiceFactory.Parameters parameters) {
+        super(parameters);
         OpenShiftCluster cluster = parameters.getCluster();
-        Identity identity = parameters.getIdentity();
-        ConfigBuilder configBuilder = new ConfigBuilder()
-                .withMasterUrl(cluster.getApiUrl())
-                //TODO Issue #17 never do this in production as it opens us to man-in-the-middle attacks
-                .withTrustCerts(true);
-        identity.accept(new IdentityVisitor() {
-            @Override
-            public void visit(TokenIdentity token) {
-                configBuilder.withOauthToken(token.getToken());
-            }
 
-            @Override
-            public void visit(UserPasswordIdentity userPassword) {
-                configBuilder
-                        .withUsername(userPassword.getUsername())
-                        .withPassword(userPassword.getPassword());
-            }
-        });
-        final Config config = configBuilder.build();
-        String impersonateUsername = parameters.getImpersonateUsername();
-        if (impersonateUsername != null) {
-            // Impersonate the given user name (can be null)
-            RequestConfig requestConfig = config.getRequestConfig();
-            requestConfig.setImpersonateUsername(impersonateUsername);
-            requestConfig.setImpersonateGroups("system:authenticated", "system:authenticated:oauth");
-        }
-        this.client = new DefaultOpenShiftClient(config);
         try {
             this.consoleUrl = (cluster.getConsoleUrl() != null) ? new URL(cluster.getConsoleUrl()) : null;
         } catch (MalformedURLException e) {
             throw new UncheckedIOException("Console URL is malformed: " + cluster.getConsoleUrl(), e);
         }
+
+        openShiftClient = client.adapt(OpenShiftClient.class);
     }
 
     /**
@@ -141,7 +94,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         // Create
         final ProjectRequest projectRequest;
         try {
-            projectRequest = client.projectrequests().createNew().
+            projectRequest = openShiftClient.projectrequests().createNew().
                     withNewMetadata().
                     withName(name).
                     endMetadata().
@@ -180,7 +133,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
     @Override
     public Map<String, URL> getRoutes(OpenShiftProject project) {
         Map<String, URL> result = new HashMap<>();
-        for (Route route : client.routes().inNamespace(project.getName()).list().getItems()) {
+        for (Route route : openShiftClient.routes().inNamespace(project.getName()).list().getItems()) {
             String name = route.getMetadata().getName();
             try {
                 URL url = new URL("http", route.getSpec().getHost(), Objects.toString(route.getSpec().getPath(), ""));
@@ -215,30 +168,6 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         configureProject(project, templateStream, parameters);
     }
 
-    private List<Parameter> getParameters(OpenShiftProject project, String sourceRepositoryProvider,
-                                          @Nullable URI sourceRepositoryUri,
-                                          @Nullable String sourceRepositoryContextDir) {
-        List<Parameter> parameters = new ArrayList<>();
-        if (sourceRepositoryUri != null) {
-            parameters.add(createParameter("SOURCE_REPOSITORY_URL", sourceRepositoryUri.toString()));
-            String repositoryName = getRepositoryName(sourceRepositoryUri);
-            if (isNotBlank(repositoryName)) {
-                parameters.add(createParameter("SOURCE_REPOSITORY_NAME", repositoryName));
-            }
-        }
-        parameters.add(createParameter("SOURCE_REPOSITORY_PROVIDER", sourceRepositoryProvider));
-        if (sourceRepositoryContextDir != null) {
-            parameters.add(createParameter("SOURCE_REPOSITORY_DIR", sourceRepositoryContextDir));
-        }
-        parameters.add(createParameter("PROJECT", project.getName()));
-        if (consoleUrl != null) {
-            parameters.add(createParameter("OPENSHIFT_CONSOLE_URL", consoleUrl.toString()));
-        }
-        parameters.add(createParameter("GITHUB_WEBHOOK_SECRET", Long.toString(System.currentTimeMillis())));
-        return parameters;
-    }
-
-
     @Override
     public void configureProject(OpenShiftProject project, InputStream templateStream, Map<String, String> parameters) {
         requireNonNull(project, "Project cannot be null");
@@ -247,18 +176,6 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         List<Parameter> parameterList = parameters.entrySet().stream()
                 .map(e -> createParameter(e.getKey(), e.getValue())).collect(Collectors.toList());
         configureProject(project, templateStream, parameterList);
-    }
-
-    /**
-     * Extract the Git Repository name to be used in the SOURCE_REPOSITORY_NAME parameter in the templates
-     *
-     * @param uri a GitHub URI (eg https://github.com/foo/bar)
-     * @return the repository name of the given {@link URI} (eg. bar)
-     */
-    static String getRepositoryName(URI uri) {
-        String path = stripEnd(uri.getPath(), "/");
-        String substring = path.substring(path.lastIndexOf('/') + 1);
-        return stripEnd(substring, ".git");
     }
 
     /**
@@ -315,7 +232,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         if (projectName == null || projectName.isEmpty()) {
             throw new IllegalArgumentException("project name must be specified");
         }
-        final boolean deleted = client.projects().withName(projectName).delete();
+        final boolean deleted = openShiftClient.projects().withName(projectName).delete();
         if (deleted) {
             log.log(FINEST, "Deleted project: {0}", projectName);
         }
@@ -328,7 +245,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
             throw new IllegalArgumentException("Project name cannot be empty");
         }
         try {
-            Project project = client.projects().withName(name).get();
+            Project project = openShiftClient.projects().withName(name).get();
             return project != null;
         } catch (KubernetesClientException ignored) {
             return false;
@@ -353,15 +270,12 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         }
     }
 
-    private Parameter createParameter(final String name, final String value) {
-        return new ParameterBuilder().withName(name).withValue(value).build();
-    }
 
     private void configureProject(final OpenShiftProject project, final InputStream templateStream,
                                   List<Parameter> parameters) {
         try {
             try (final InputStream pipelineTemplateStream = templateStream) {
-                TemplateResource<Template, KubernetesList, DoneableTemplate> templateResource = client.templates()
+                TemplateResource<Template, KubernetesList, DoneableTemplate> templateResource = openShiftClient.templates()
                         .inNamespace(project.getName()).load(pipelineTemplateStream);
                 Map<String, String> parameterValues = applyParameterValueProperties(project, parameters)
                         .stream()
@@ -415,7 +329,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
     // The variable will be replaced with the value obtained from the indicated
     // object property.
     private List<Parameter> applyParameterValueProperties(final OpenShiftProject project, List<Parameter> parameters) {
-        RouteList routes = client.routes().inNamespace(project.getName()).list();
+        RouteList routes = openShiftClient.routes().inNamespace(project.getName()).list();
         return parameters.stream()
                 .map(p -> new ParameterBuilder(p)
                         .withValue(replaceParameterVariable(p, routes))
@@ -456,7 +370,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
     private void fixJenkinsServiceAccount(final OpenShiftProject project) {
         // Add Admin role to the jenkins serviceaccount
         log.finest(() -> "Adding role admin to jenkins serviceaccount for project '" + project.getName() + "'");
-        client.roleBindings()
+        openShiftClient.roleBindings()
                 .inNamespace(project.getName())
                 .withName("admin")
                 .edit()
@@ -468,12 +382,12 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
 
     @Override
     public OpenShiftClient getOpenShiftClient() {
-        return client;
+        return openShiftClient;
     }
 
     @Override
     public OpenShiftUser getLoggedUser() {
-        return ImmutableOpenShiftUser.of(client.currentUser().getMetadata().getName());
+        return ImmutableOpenShiftUser.of(openShiftClient.currentUser().getMetadata().getName());
     }
 
     @Override
@@ -483,7 +397,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
 
     @Override
     public void deleteBuildConfig(final String namespace, final String name) {
-        client.buildConfigs().inNamespace(namespace).withName(name).delete();
+        openShiftClient.buildConfigs().inNamespace(namespace).withName(name).delete();
     }
 
     @Override
@@ -502,11 +416,6 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
     }
 
     @Override
-    public void deleteConfigMap(final String namespace, final String configName) {
-        getResource(configName, namespace).delete();
-    }
-
-    @Override
     public void triggerBuild(String projectName, String namespace) {
         String triggeredBuildName;
         BuildRequest request = new BuildRequestBuilder().
@@ -514,7 +423,7 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
                 addNewTriggeredBy().withMessage("Forge triggered").endTriggeredBy().
                 build();
         try {
-            Build build = client.buildConfigs().inNamespace(namespace)
+            Build build = openShiftClient.buildConfigs().inNamespace(namespace)
                     .withName(projectName).instantiate(request);
             if (build != null) {
                 triggeredBuildName = build.getMetadata().getName();
@@ -533,12 +442,6 @@ public final class Fabric8OpenShiftServiceImpl implements OpenShiftService, Open
         return new ConfigMapBuilder().withNewMetadata().withName(configMapName).
                 addToLabels("provider", "fabric8").
                 addToLabels("openshift.io/jenkins", "job").endMetadata().withData(new HashMap<>()).build();
-    }
-
-    private Resource<ConfigMap, DoneableConfigMap> getResource(String configName, String namespace) {
-        String configMapName = convertToKubernetesName(configName, false);
-        return client.configMaps().inNamespace(namespace).withName(configMapName);
-
     }
 
     private static String convertToKubernetesName(String text, boolean allowDots) {

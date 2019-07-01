@@ -51,8 +51,8 @@ public class Fabric8OpenShiftServiceFactory implements OpenShiftServiceFactory {
     }
 
     @Override
-    public Fabric8OpenShiftServiceImpl create(Parameters parameters) {
-        return new Fabric8OpenShiftServiceImpl(parameters);
+    public BaseKubernetesService create(Parameters parameters) {
+        return new KubernetesServiceImpl(parameters);
     }
 
     @Override
