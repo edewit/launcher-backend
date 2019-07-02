@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: TaskRun
 metadata:
-  name: s2i-nodejs-taskrun
+  name: s2i-${PROJECT_NAME}-taskrun
 spec:
   taskRef:
     name: s2i
@@ -17,7 +17,7 @@ spec:
         type: git
         params:
         - name: url
-          value: https://github.com/edewit/nodejs-ex
+          value: ${GIT_URL}
   outputs:
     resources:
     - name: image
@@ -25,4 +25,4 @@ spec:
         type: image
         params:
         - name: url
-          value: docker-registry.docker-registry:5000/nodejs-s2i-ex
+          value: docker-registry.docker-registry:5000/${PROJECT_NAME}

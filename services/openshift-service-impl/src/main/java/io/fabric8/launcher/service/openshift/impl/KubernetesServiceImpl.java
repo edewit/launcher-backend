@@ -1,10 +1,8 @@
 package io.fabric8.launcher.service.openshift.impl;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.KubernetesList;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.launcher.service.openshift.api.DuplicateProjectException;
 import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
@@ -18,14 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.logging.Level.FINEST;
 
 public class KubernetesServiceImpl extends BaseKubernetesService {
@@ -37,7 +34,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
         super(parameters);
     }
 
-    private CustomResourceDefinitionContext getTaskCRD(String namespace) {
+    private CustomResourceDefinitionContext getTaskCRD() {
         if (taskCRD == null) {
             taskCRD = new CustomResourceDefinitionContext.Builder()
                     .withName("tasks.tekton.dev")
@@ -48,7 +45,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
                     .build();
             InputStream resource = getClass().getResourceAsStream("/s2i.yaml");
             try {
-                client.customResource(taskCRD).create(namespace, resource);
+                client.customResource(taskCRD).create("default", resource);
             } catch (IOException e) {
                 throw new RuntimeException("could not create s2i task crd", e);
             }
@@ -71,7 +68,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
 
     @Override
     public void deleteBuildConfig(String namespace, String name) {
-        client.customResource(getTaskCRD(namespace)).delete(namespace, name);
+        client.customResource(getTaskCRD()).delete(namespace, name);
     }
 
     @Override
@@ -89,17 +86,11 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
 
     @Override
     public void configureProject(OpenShiftProject project, String sourceRepositoryProvider, URI sourceRepositoryUri) {
-        String stream = getClass().getResource("/s2i-taskrun.yaml").getFile();
-
-        String content;
-        try {
-            content = new String(Files.readAllBytes(Paths.get(stream)), StandardCharsets.UTF_8);
-
-            content = content.replaceAll("\\$\\{GIT_URL}", sourceRepositoryUri.toString());
-            content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
-            InputStream is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
-
-            getTaskCRD(project.getName());
+        String content = new Scanner(getClass().getResourceAsStream("/s2i-taskrun.yaml"), UTF_8.name()).useDelimiter("\\A").next();
+        content = content.replaceAll("\\$\\{GIT_URL}", sourceRepositoryUri.toString());
+        content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
+        try (InputStream is = new ByteArrayInputStream(content.getBytes(UTF_8))) {
+            getTaskCRD();
             CustomResourceDefinitionContext taskRun = new CustomResourceDefinitionContext.Builder()
                     .withName("taskruns.tekton.dev")
                     .withGroup("tekton.dev")
@@ -108,7 +99,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
                     .withScope("Namespaced")
                     .build();
 
-            client.customResource(taskRun).create(project.getName(), is);
+            client.customResource(taskRun).createOrReplace("default", is);
         } catch (IOException e) {
             throw new RuntimeException("could not find template taskrun definition", e);
         }
