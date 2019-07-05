@@ -1,5 +1,19 @@
 package io.fabric8.launcher.service.openshift.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -15,24 +29,6 @@ import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.client.OpenShiftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class KubernetesServiceImpl extends BaseKubernetesService {
     private static final Logger LOG = LoggerFactory.getLogger(KubernetesServiceImpl.class);
@@ -103,10 +99,9 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
     }
 
     private void buildConfig(OpenShiftProject project, URI sourceRepositoryUri) {
-        String content = new Scanner(getClass().getResourceAsStream("/s2i-taskrun.yaml"), UTF_8.name()).useDelimiter("\\A").next();
-        content = content.replaceAll("\\$\\{GIT_URL}", sourceRepositoryUri.toString());
-        content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
-        try (InputStream is = new ByteArrayInputStream(content.getBytes(UTF_8))) {
+        final SimpleTemplate simpleTemplate = new SimpleTemplate(
+                "${GIT_URL}", sourceRepositoryUri.toString(), "${PROJECT_NAME}", project.getName());
+        try (InputStream is = simpleTemplate.parseTemplate("s2i-taskrun.yaml")) {
             getTaskCRD();
             CustomResourceDefinitionContext taskRun = new CustomResourceDefinitionContext.Builder()
                     .withName("taskruns.tekton.dev")
@@ -123,15 +118,16 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
     }
 
     private void deploy(OpenShiftProject project) {
-        String content = new Scanner(getClass().getResourceAsStream("/deployment.yaml"), UTF_8.name()).useDelimiter("\\A").next();
-        content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
+        String clusterRegistryIP = "";
         try {
-            String clusterRegistryIP = getClusterRegistryIP();
-            content = content.replaceAll("\\$\\{CLUSTER_IP}", clusterRegistryIP);
+            clusterRegistryIP = getClusterRegistryIP();
         } catch (Exception e) {
             //ignore
         }
-        try (InputStream is = new ByteArrayInputStream(content.getBytes(UTF_8))) {
+        final SimpleTemplate simpleTemplate = new SimpleTemplate(
+                "${CLUSTER_IP}", clusterRegistryIP, "${PROJECT_NAME}", project.getName());
+
+        try (InputStream is = simpleTemplate.parseTemplate("deployment.yaml")) {
             client.load(is).inNamespace(project.getName()).createOrReplace();
         } catch (IOException e) {
             throw new RuntimeException("could not deploy build image", e);
@@ -214,7 +210,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
 
     }
 
-    void waitUntilBuildIsDone(final String projectName) {
+    private void waitUntilBuildIsDone(final String projectName) {
         final String label = String.format("tekton.dev/taskRun=s2i-%s-taskrun", projectName);
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -225,7 +221,8 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
                     Pod pod = list.get(0);
                     if (!pod.getStatus().getContainerStatuses().isEmpty()) {
                         Predicate<ContainerStatus> predicate = containerStatus ->
-                                containerStatus.getState().getTerminated() == null || !"Completed".equals(containerStatus.getState().getTerminated().getReason());
+                                containerStatus.getState().getTerminated() == null
+                                        || !"Completed".equals(containerStatus.getState().getTerminated().getReason());
                         long count = pod.getStatus().getContainerStatuses().stream().filter(predicate).count();
                         if (count == 0) {
                             countDownLatch.countDown();
