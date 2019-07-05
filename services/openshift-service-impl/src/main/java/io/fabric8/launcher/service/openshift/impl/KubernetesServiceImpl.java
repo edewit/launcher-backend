@@ -217,22 +217,18 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         final Runnable readyPodsPoller = () -> {
-            try {
-                List<Pod> list = client.pods().inNamespace(DEFAULT_NAMESPACE).withLabel(label).list().getItems();
-                if (!list.isEmpty()) {
-                    Pod pod = list.get(0);
-                    if (!pod.getStatus().getContainerStatuses().isEmpty()) {
-                        Predicate<ContainerStatus> predicate = containerStatus ->
-                                containerStatus.getState().getTerminated() == null
-                                        || !"Completed".equals(containerStatus.getState().getTerminated().getReason());
-                        long count = pod.getStatus().getContainerStatuses().stream().filter(predicate).count();
-                        if (count == 0) {
-                            countDownLatch.countDown();
-                        }
+            List<Pod> list = client.pods().inNamespace(DEFAULT_NAMESPACE).withLabel(label).list().getItems();
+            if (!list.isEmpty()) {
+                Pod pod = list.get(0);
+                if (!pod.getStatus().getContainerStatuses().isEmpty()) {
+                    Predicate<ContainerStatus> predicate = containerStatus ->
+                            containerStatus.getState().getTerminated() == null
+                                    || !"Completed".equals(containerStatus.getState().getTerminated().getReason());
+                    long count = pod.getStatus().getContainerStatuses().stream().filter(predicate).count();
+                    if (count == 0) {
+                        countDownLatch.countDown();
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         };
 
