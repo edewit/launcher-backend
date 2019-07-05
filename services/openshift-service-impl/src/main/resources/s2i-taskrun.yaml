@@ -25,4 +25,4 @@ spec:
         type: image
         params:
         - name: url
-          value: docker-registry.docker-registry:5000/${PROJECT_NAME}
+          value: registry.docker-registry:5000/${PROJECT_NAME}

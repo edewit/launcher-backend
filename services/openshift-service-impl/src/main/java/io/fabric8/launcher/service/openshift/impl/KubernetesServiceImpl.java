@@ -1,8 +1,11 @@
 package io.fabric8.launcher.service.openshift.impl;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.launcher.service.openshift.api.DuplicateProjectException;
 import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
@@ -10,6 +13,8 @@ import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
 import io.fabric8.launcher.service.openshift.api.OpenShiftUser;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.client.OpenShiftClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -20,13 +25,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.logging.Logger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.logging.Level.FINEST;
 
 public class KubernetesServiceImpl extends BaseKubernetesService {
-    private static final Logger log = Logger.getLogger(KubernetesServiceImpl.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(KubernetesServiceImpl.class);
+    private static final String DEFAULT_NAMESPACE = "default";
 
     private CustomResourceDefinitionContext taskCRD;
 
@@ -45,7 +55,8 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
                     .build();
             InputStream resource = getClass().getResourceAsStream("/s2i.yaml");
             try {
-                client.customResource(taskCRD).create("default", resource);
+                client.customResource(taskCRD).create(DEFAULT_NAMESPACE, resource);
+                client.load(getClass().getResourceAsStream("/registry.yaml")).createOrReplace();
             } catch (IOException e) {
                 throw new RuntimeException("could not create s2i task crd", e);
             }
@@ -61,7 +72,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
         }
         final boolean deleted = client.namespaces().withName(projectName).delete();
         if (deleted) {
-            log.log(FINEST, "Deleted project: {0}", projectName);
+            LOG.debug("Deleted project: {}", projectName);
         }
         return deleted;
     }
@@ -86,6 +97,12 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
 
     @Override
     public void configureProject(OpenShiftProject project, String sourceRepositoryProvider, URI sourceRepositoryUri) {
+        buildConfig(project, sourceRepositoryUri);
+        waitUntilBuildIsDone(project.getName());
+        deploy(project);
+    }
+
+    private void buildConfig(OpenShiftProject project, URI sourceRepositoryUri) {
         String content = new Scanner(getClass().getResourceAsStream("/s2i-taskrun.yaml"), UTF_8.name()).useDelimiter("\\A").next();
         content = content.replaceAll("\\$\\{GIT_URL}", sourceRepositoryUri.toString());
         content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
@@ -99,10 +116,33 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
                     .withScope("Namespaced")
                     .build();
 
-            client.customResource(taskRun).createOrReplace("default", is);
+            client.customResource(taskRun).createOrReplace(DEFAULT_NAMESPACE, is);
         } catch (IOException e) {
             throw new RuntimeException("could not find template taskrun definition", e);
         }
+    }
+
+    private void deploy(OpenShiftProject project) {
+        String content = new Scanner(getClass().getResourceAsStream("/deployment.yaml"), UTF_8.name()).useDelimiter("\\A").next();
+        content = content.replaceAll("\\$\\{PROJECT_NAME}", project.getName());
+        try {
+            String clusterRegistryIP = getClusterRegistryIP();
+            content = content.replaceAll("\\$\\{CLUSTER_IP}", clusterRegistryIP);
+        } catch (Exception e) {
+            //ignore
+        }
+        try (InputStream is = new ByteArrayInputStream(content.getBytes(UTF_8))) {
+            client.load(is).inNamespace(project.getName()).createOrReplace();
+        } catch (IOException e) {
+            throw new RuntimeException("could not deploy build image", e);
+        }
+    }
+
+    private String getClusterRegistryIP() throws Exception {
+        Predicate<Service> predicate = service -> "registry".equals(service.getMetadata().getName());
+        Optional<Service> registryService = client.services().list().getItems().stream().filter(predicate).findFirst();
+        Optional<Object> clusterIP = registryService.map(service -> service.getSpec().getClusterIP());
+        return clusterIP.map(Object::toString).orElseThrow(Exception::new);
     }
 
     @Override
@@ -172,5 +212,46 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
     @Override
     public void applyBuildConfig(BuildConfig buildConfig, String namespace) {
 
+    }
+
+    void waitUntilBuildIsDone(final String projectName) {
+        final String label = String.format("tekton.dev/taskRun=s2i-%s-taskrun", projectName);
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        final Runnable readyPodsPoller = () -> {
+            try {
+                List<Pod> list = client.pods().inNamespace(DEFAULT_NAMESPACE).withLabel(label).list().getItems();
+                if (!list.isEmpty()) {
+                    Pod pod = list.get(0);
+                    if (!pod.getStatus().getContainerStatuses().isEmpty()) {
+                        Predicate<ContainerStatus> predicate = containerStatus ->
+                                containerStatus.getState().getTerminated() == null || !"Completed".equals(containerStatus.getState().getTerminated().getReason());
+                        long count = pod.getStatus().getContainerStatuses().stream().filter(predicate).count();
+                        if (count == 0) {
+                            countDownLatch.countDown();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
+
+        wait(countDownLatch, readyPodsPoller);
+    }
+
+    private void wait(CountDownLatch countDownLatch, Runnable readyPodsPoller) {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture poller = executor.scheduleWithFixedDelay(readyPodsPoller, 0, 20, TimeUnit.SECONDS);
+        ScheduledFuture logger = executor.scheduleWithFixedDelay(() -> LOG.debug("waiting..."), 0, 40, TimeUnit.SECONDS);
+        try {
+            countDownLatch.await(15, TimeUnit.MINUTES);
+            executor.shutdown();
+        } catch (InterruptedException e) {
+            poller.cancel(true);
+            logger.cancel(true);
+            executor.shutdown();
+            LOG.warn("Giving up after waiting for 15 minutes");
+        }
     }
 }

@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static java.util.logging.Level.FINEST;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.lang3.StringUtils.stripEnd;
 
 /**
  * Implementation of the {@link OpenShiftService} using the Fabric8

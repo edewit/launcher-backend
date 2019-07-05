@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${PROJECT_NAME}-deployment
+  namespace: ${PROJECT_NAME}
+  labels:
+    app: ${PROJECT_NAME}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${PROJECT_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${PROJECT_NAME}
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}
+        image: ${CLUSTER_IP}:5000/${PROJECT_NAME}
+        ports:
+        - containerPort: 8080
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: ${PROJECT_NAME}-service
+  namespace: ${PROJECT_NAME}
+  labels:
+    app: ${PROJECT_NAME}
+spec:
+  type: NodePort
+  selector:
+    app: ${PROJECT_NAME}
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
