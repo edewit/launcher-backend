@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class KubernetesServiceImpl extends BaseKubernetesService {
     private static final Logger LOG = LoggerFactory.getLogger(KubernetesServiceImpl.class);
+
     private static final String DEFAULT_NAMESPACE = "default";
 
     private CustomResourceDefinitionContext taskCRD;
@@ -52,7 +53,9 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
             InputStream resource = getClass().getResourceAsStream("/s2i.yaml");
             try {
                 client.customResource(taskCRD).create(DEFAULT_NAMESPACE, resource);
-                client.load(getClass().getResourceAsStream("/registry.yaml")).createOrReplace();
+                if (!getRegistry().isPresent()) {
+                    client.load(getClass().getResourceAsStream("/registry.yaml")).createOrReplace();
+                }
             } catch (IOException e) {
                 throw new RuntimeException("could not create s2i task crd", e);
             }
@@ -118,12 +121,7 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
     }
 
     private void deploy(OpenShiftProject project) {
-        String clusterRegistryIP = "";
-        try {
-            clusterRegistryIP = getClusterRegistryIP();
-        } catch (Exception e) {
-            //ignore
-        }
+        String clusterRegistryIP = getClusterRegistryIP().orElse("");
         final SimpleTemplate simpleTemplate = new SimpleTemplate(
                 "${CLUSTER_IP}", clusterRegistryIP, "${PROJECT_NAME}", project.getName());
 
@@ -134,11 +132,15 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
         }
     }
 
-    private String getClusterRegistryIP() throws Exception {
+    private Optional<String> getClusterRegistryIP() {
+        Optional<Object> clusterIP = getRegistry();
+        return clusterIP.map(Object::toString);
+    }
+
+    private Optional<Object> getRegistry() {
         Predicate<Service> predicate = service -> "registry".equals(service.getMetadata().getName());
         Optional<Service> registryService = client.services().list().getItems().stream().filter(predicate).findFirst();
-        Optional<Object> clusterIP = registryService.map(service -> service.getSpec().getClusterIP());
-        return clusterIP.map(Object::toString).orElseThrow(Exception::new);
+        return registryService.map(service -> service.getSpec().getClusterIP());
     }
 
     @Override
