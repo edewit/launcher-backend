@@ -8,7 +8,7 @@ spec:
   inputs:
     params:
     - name: BUILDER_IMAGE
-      value: docker.io/centos/nodejs-8-centos7
+      value: ${BUILDER_IMAGE}
     - name: TLSVERIFY
       value: "false"
     resources:

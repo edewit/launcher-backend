@@ -2,9 +2,10 @@ package io.fabric8.launcher.service.openshift.impl;
 
 import io.fabric8.launcher.base.identity.ImmutableUserPasswordIdentity;
 import io.fabric8.launcher.base.identity.UserPasswordIdentity;
-import io.fabric8.launcher.service.openshift.api.*;
-import io.fabric8.openshift.api.model.Project;
-import jdk.nashorn.internal.ir.annotations.Immutable;
+import io.fabric8.launcher.service.openshift.api.ImmutableParameters;
+import io.fabric8.launcher.service.openshift.api.OpenShiftCluster;
+import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
+import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +16,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)

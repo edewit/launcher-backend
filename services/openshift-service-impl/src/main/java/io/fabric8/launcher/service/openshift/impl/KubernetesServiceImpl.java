@@ -1,9 +1,29 @@
 package io.fabric8.launcher.service.openshift.impl;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ContainerStatus;
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.launcher.creator.core.analysis.AnalyzeKt;
+import io.fabric8.launcher.creator.core.analysis.GitKt;
+import io.fabric8.launcher.service.openshift.api.DuplicateProjectException;
+import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
+import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
+import io.fabric8.launcher.service.openshift.api.OpenShiftUser;
+import io.fabric8.openshift.api.model.BuildConfig;
+import io.fabric8.openshift.client.OpenShiftClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,22 +33,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.ContainerStatus;
-import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Service;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.launcher.service.openshift.api.DuplicateProjectException;
-import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
-import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
-import io.fabric8.launcher.service.openshift.api.OpenShiftUser;
-import io.fabric8.openshift.api.model.BuildConfig;
-import io.fabric8.openshift.client.OpenShiftClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class KubernetesServiceImpl extends BaseKubernetesService {
     private static final Logger LOG = LoggerFactory.getLogger(KubernetesServiceImpl.class);
@@ -102,8 +106,10 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
     }
 
     private void buildConfig(OpenShiftProject project, URI sourceRepositoryUri) {
+        String buildImage = determineBuildImage(project.getName(), sourceRepositoryUri);
         final SimpleTemplate simpleTemplate = new SimpleTemplate(
-                "${GIT_URL}", sourceRepositoryUri.toString(), "${PROJECT_NAME}", project.getName());
+                "${GIT_URL}", sourceRepositoryUri.toString(), "${PROJECT_NAME}", project.getName(),
+                "${BUILDER_IMAGE}", buildImage);
         try (InputStream is = simpleTemplate.parseTemplate("s2i-taskrun.yaml")) {
             getTaskCRD();
             CustomResourceDefinitionContext taskRun = new CustomResourceDefinitionContext.Builder()
@@ -117,6 +123,17 @@ public class KubernetesServiceImpl extends BaseKubernetesService {
             client.customResource(taskRun).createOrReplace(DEFAULT_NAMESPACE, is);
         } catch (IOException e) {
             throw new RuntimeException("could not find template taskrun definition", e);
+        }
+    }
+
+    private String determineBuildImage(String projectName, URI sourceRepositoryUri) {
+        try {
+            Path targetDir = Files.createTempDirectory(projectName);
+            GitKt.cloneGitRepo(targetDir, sourceRepositoryUri.toString(), "master");
+            targetDir.toFile().deleteOnExit();
+            return AnalyzeKt.determineBuilderImage(targetDir).getId();
+        } catch (IOException e) {
+            throw new RuntimeException("could not clone repo", e);
         }
     }
 
