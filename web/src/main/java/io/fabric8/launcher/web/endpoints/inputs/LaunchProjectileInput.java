@@ -14,8 +14,8 @@ import io.fabric8.launcher.booster.catalog.rhoar.Version;
 import io.fabric8.launcher.core.api.projectiles.context.LauncherProjectileContext;
 
 import static io.fabric8.launcher.service.git.api.GitService.GIT_NAME_REGEXP;
-import static io.fabric8.launcher.service.openshift.api.OpenShiftService.PROJECT_NAME_REGEX;
-import static io.fabric8.launcher.service.openshift.api.OpenShiftService.PROJECT_NAME_VALIDATION_MESSAGE;
+import static io.fabric8.launcher.service.openshift.api.CloudService.PROJECT_NAME_REGEX;
+import static io.fabric8.launcher.service.openshift.api.CloudService.PROJECT_NAME_VALIDATION_MESSAGE;
 import static java.util.Collections.emptyList;
 
 /**

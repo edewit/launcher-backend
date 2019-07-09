@@ -11,8 +11,8 @@ import io.fabric8.launcher.core.api.projectiles.context.UploadZipProjectileConte
 import org.jboss.resteasy.annotations.providers.multipart.PartType;
 
 import static io.fabric8.launcher.service.git.api.GitService.GIT_NAME_REGEXP;
-import static io.fabric8.launcher.service.openshift.api.OpenShiftService.PROJECT_NAME_REGEX;
-import static io.fabric8.launcher.service.openshift.api.OpenShiftService.PROJECT_NAME_VALIDATION_MESSAGE;
+import static io.fabric8.launcher.service.openshift.api.CloudService.PROJECT_NAME_REGEX;
+import static io.fabric8.launcher.service.openshift.api.CloudService.PROJECT_NAME_VALIDATION_MESSAGE;
 
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>

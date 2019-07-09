@@ -62,8 +62,8 @@
     <module>core/core-impl</module>
     <module>services/git-service-api</module>
     <module>services/git-service-impl</module>
-    <module>services/openshift-service-api</module>
-    <module>services/openshift-service-impl</module>
+    <module>services/cloud-service-api</module>
+    <module>services/cloud-service-impl</module>
     <module>frontend</module>
     <module>creator</module>
     <module>web</module>
@@ -112,12 +112,12 @@
       </dependency>
       <dependency>
         <groupId>io.fabric8.launcher</groupId>
-        <artifactId>launcher-service-openshift-api</artifactId>
+        <artifactId>launcher-service-cloud-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>io.fabric8.launcher</groupId>
-        <artifactId>launcher-service-openshift-impl</artifactId>
+        <artifactId>launcher-service-cloud-impl</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

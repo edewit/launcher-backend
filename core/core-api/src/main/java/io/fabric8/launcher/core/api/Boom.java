@@ -1,10 +1,10 @@
 package io.fabric8.launcher.core.api;
 
-import javax.annotation.Nullable;
-
 import io.fabric8.launcher.service.git.api.GitRepository;
-import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
+import io.fabric8.launcher.service.openshift.api.CloudProject;
 import org.immutables.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * Value object containing the result of a {@link MissionControl#launch(Projectile)}
@@ -23,5 +23,5 @@ public interface Boom {
     /**
      * @return the OpenShift project we've created for the user
      */
-    OpenShiftProject getCreatedProject();
+    CloudProject getCreatedProject();
 }

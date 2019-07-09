@@ -27,12 +27,13 @@ import io.fabric8.launcher.base.identity.Identity;
 import io.fabric8.launcher.base.identity.TokenIdentity;
 import io.fabric8.launcher.core.api.security.Secured;
 import io.fabric8.launcher.core.spi.IdentityProvider;
+import io.fabric8.launcher.service.openshift.api.CloudService;
+import io.fabric8.launcher.service.openshift.api.CloudServiceFactory;
 import io.fabric8.launcher.service.openshift.api.ImmutableParameters;
 import io.fabric8.launcher.service.openshift.api.OpenShiftCluster;
 import io.fabric8.launcher.service.openshift.api.OpenShiftClusterRegistry;
-import io.fabric8.launcher.service.openshift.api.OpenShiftService;
-import io.fabric8.launcher.service.openshift.api.OpenShiftServiceFactory;
 import io.fabric8.launcher.service.openshift.api.OpenShiftUser;
+import io.fabric8.launcher.web.producers.CouldServiceProducer;
 
 import static java.util.stream.Collectors.toList;
 
@@ -44,7 +45,7 @@ import static java.util.stream.Collectors.toList;
 public class OpenShiftEndpoint {
 
     @Inject
-    OpenShiftServiceFactory openShiftServiceFactory;
+    CloudServiceFactory cloudServiceFactory;
 
     @Inject
     OpenShiftClusterRegistry clusterRegistry;
@@ -53,7 +54,7 @@ public class OpenShiftEndpoint {
     Instance<IdentityProvider> identityProviderInstance;
 
     @Inject
-    Instance<OpenShiftService> openShiftService;
+    Instance<CloudService> openShiftService;
 
     @Inject
     Instance<TokenIdentity> authorizationInstance;
@@ -87,7 +88,7 @@ public class OpenShiftEndpoint {
 
     private ClusterVerified getClusterVerified(OpenShiftCluster cluster, Identity identity) {
         final ImmutableParameters.Builder builder = ImmutableParameters.builder().cluster(cluster).identity(identity);
-        final OpenShiftService service = openShiftServiceFactory.create(builder.build());
+        final CloudService service = cloudServiceFactory.create(builder.build());
         try {
             service.getLoggedUser();
             return new ClusterVerified(cluster, true);

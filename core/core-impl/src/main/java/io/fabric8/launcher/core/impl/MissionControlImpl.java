@@ -23,11 +23,11 @@ import io.fabric8.launcher.core.api.projectiles.context.CreateProjectileContext;
 import io.fabric8.launcher.core.api.projectiles.context.LauncherProjectileContext;
 import io.fabric8.launcher.core.impl.catalog.RhoarBoosterCatalogFactory;
 import io.fabric8.launcher.core.impl.steps.GitSteps;
-import io.fabric8.launcher.core.impl.steps.OpenShiftSteps;
+import io.fabric8.launcher.core.impl.steps.CloudSteps;
 import io.fabric8.launcher.core.spi.ProjectileEnricher;
 import io.fabric8.launcher.core.spi.ProjectilePreparer;
 import io.fabric8.launcher.service.git.api.GitRepository;
-import io.fabric8.launcher.service.openshift.api.OpenShiftProject;
+import io.fabric8.launcher.service.openshift.api.CloudProject;
 import io.fabric8.launcher.tracking.SegmentAnalyticsProvider;
 
 /**
@@ -50,7 +50,7 @@ public class MissionControlImpl implements DefaultMissionControl {
     Instance<GitSteps> gitStepsInstance;
 
     @Inject
-    Instance<OpenShiftSteps> openShiftStepsInstance;
+    Instance<CloudSteps> cloudStepsInstance;
 
     @Inject
     Instance<TokenIdentity> identityInstance;
@@ -97,7 +97,7 @@ public class MissionControlImpl implements DefaultMissionControl {
     @Override
     public Boom launch(CreateProjectile projectile) {
         GitSteps gitSteps = gitStepsInstance.get();
-        OpenShiftSteps openShiftSteps = openShiftStepsInstance.get();
+        CloudSteps cloudSteps = cloudStepsInstance.get();
 
         try {
             enrichers.forEach(enricher -> enricher.accept(projectile));
@@ -109,11 +109,11 @@ public class MissionControlImpl implements DefaultMissionControl {
                 gitSteps.pushToGitRepository(projectile, gitRepository);
             }
 
-            OpenShiftProject openShiftProject = openShiftSteps.createOpenShiftProject(projectile);
-            openShiftSteps.configureBuildPipeline(projectile, openShiftProject, gitRepository);
+            CloudProject openShiftProject = cloudSteps.createOpenShiftProject(projectile);
+            cloudSteps.configureBuildPipeline(projectile, openShiftProject, gitRepository);
 
             if (gitRepository != null) {
-                List<URL> webhooks = openShiftSteps.getWebhooks(openShiftProject);
+                List<URL> webhooks = cloudSteps.getWebhooks(openShiftProject);
                 gitSteps.createWebHooks(projectile, gitRepository, webhooks);
             }
             // Call analytics
@@ -127,7 +127,7 @@ public class MissionControlImpl implements DefaultMissionControl {
 
         } finally {
             gitStepsInstance.destroy(gitSteps);
-            openShiftStepsInstance.destroy(openShiftSteps);
+            cloudStepsInstance.destroy(cloudSteps);
         }
     }
 }
