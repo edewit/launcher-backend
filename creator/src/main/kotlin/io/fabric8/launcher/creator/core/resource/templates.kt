@@ -8,9 +8,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-private const val dummyName = "placeholder-app-name-730040e0c873453f877c10cd07912d1f"
+private const val dummyName = "\\$\\{PROJECT_NAME}"
 private const val dummyLabel = "placeholder-app-label-d46881878f594a2dadfd963843452aab"
-private val dummyNameRe = dummyName.toRegex(RegexOption.LITERAL)
+private val dummyNameRe = dummyName.toRegex(RegexOption.DOT_MATCHES_ALL)
 private val dummyLabelRe = dummyLabel.toRegex(RegexOption.LITERAL)
 private const val dummyGitUrl = "https://github.com/dummy_org/dummy_repo"
 

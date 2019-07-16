@@ -5,7 +5,6 @@ import io.fabric8.launcher.creator.core.data.objectToString
 import io.fabric8.launcher.creator.core.data.yamlIo
 import io.fabric8.launcher.creator.core.existsFromPath
 import io.fabric8.launcher.creator.core.streamFromPath
-import org.yaml.snakeyaml.Yaml
 import java.nio.file.Files
 import java.nio.file.Path
 

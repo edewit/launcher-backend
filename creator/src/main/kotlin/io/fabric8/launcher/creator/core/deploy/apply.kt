@@ -3,7 +3,10 @@ package io.fabric8.launcher.creator.core.deploy
 import io.fabric8.launcher.creator.catalog.GeneratorInfo
 import io.fabric8.launcher.creator.core.*
 import io.fabric8.launcher.creator.core.catalog.*
+import io.fabric8.launcher.creator.core.data.objectToString
+import io.fabric8.launcher.creator.core.data.yamlIo
 import io.fabric8.launcher.creator.core.resource.Resources
+import io.fabric8.launcher.creator.core.resource.TemplateResource
 import io.fabric8.launcher.creator.core.resource.readResources
 import io.fabric8.launcher.creator.core.resource.writeResources
 import java.nio.file.Files
@@ -82,10 +85,21 @@ private fun applyCapability(res: Resources, targetDir: Path, appName: String, su
     val res3 = postApply(res2, targetDir, deployment)
 
     // Write everything back to their respective files
-    writeResources(rf, res3)
+    writeTemplate(rf, res3)
     writeDeployment(df, deployment)
 
     return deployment
+}
+
+private fun writeTemplate(rf: Path, res3: Resources) {
+    var str = ""
+    if (res3.json is TemplateResource) {
+        for (entry in (res3.json as TemplateResource).objects) {
+            str += "---\n" + yamlIo.objectToString(entry)
+        }
+    }
+    Files.createDirectories(rf.parent)
+    rf.toFile().writeText(str)
 }
 
 fun definedPropsOnly(propDefs: List<PropertyDef>, props: Properties?): Properties {

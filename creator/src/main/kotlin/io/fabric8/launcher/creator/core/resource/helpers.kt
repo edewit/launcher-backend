@@ -207,30 +207,7 @@ fun newRoute(res: Resources,
              appName: String,
              appLabels: Properties,
              serviceName: String, port: Int = -1): Resources {
-    val portName = if (port == -1) {
-        res.service(serviceName)?.pathGet<String>("spec.ports[0].name")
-    } else {
-        res.service(serviceName)?.pathGet<List<Properties>>("spec.ports")?.find { p -> p["port"] == port }?.get("name")
-    }
-    res.add(
-        propsOf(
-            "apiVersion" to "v1",
-            "kind" to "Route",
-            "metadata" to propsOf(
-                "name" to appName,
-                "labels" to appLabels
-            ),
-            "spec" to propsOf(
-                "port" to propsOf(
-                    "targetPort" to portName
-                ),
-                "to" to propsOf(
-                    "kind" to "Service",
-                    "name" to serviceName
-                )
-            )
-        )
-    )
+
     return res
 }
 

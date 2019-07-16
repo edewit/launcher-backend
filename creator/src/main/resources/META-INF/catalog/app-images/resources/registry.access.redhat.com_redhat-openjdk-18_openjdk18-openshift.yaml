@@ -1,129 +1,35 @@
 objects:
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
-    creationTimestamp: null
+    name: ${PROJECT_NAME}-deployment
+    namespace: ${PROJECT_NAME}
     labels:
-      app: {{.application}}
-    name: openjdk18-openshift
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-    - from:
-        kind: DockerImage
-        name: registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift
-      generation: null
-      importPolicy: {}
-      name: latest
-      referencePolicy:
-        type: ''
-  status:
-    dockerImageRepository: ''
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    creationTimestamp: null
-    labels:
-      app: {{.application}}
-    name: {{.serviceName}}
-  spec:
-    lookupPolicy:
-      local: false
-  status:
-    dockerImageRepository: ''
-- apiVersion: build.openshift.io/v1
-  kind: BuildConfig
-  metadata:
-    creationTimestamp: null
-    labels:
-      app: {{.application}}
-    name: {{.serviceName}}
-  spec:
-    nodeSelector: null
-    output:
-      to:
-        kind: ImageStreamTag
-        name: {{.serviceName}}:latest
-    postCommit: {}
-    resources: {}
-    source:
-      git:
-        uri: ${SOURCE_REPOSITORY_URL}
-      type: Git
-    strategy:
-      sourceStrategy:
-        from:
-          kind: ImageStreamTag
-          name: openjdk18-openshift:latest
-        incremental: true
-      type: Source
-    triggers:
-    - type: GitHub
-      github:
-        secret: ${GITHUB_WEBHOOK_SECRET}
-    - type: ConfigChange
-    - type: ImageChange
-      imageChange: {}
-  status:
-    lastVersion: 0
-- apiVersion: apps.openshift.io/v1
-  kind: DeploymentConfig
-  metadata:
-    creationTimestamp: null
-    labels:
-      app: {{.application}}
-    name: {{.serviceName}}
+      app: ${PROJECT_NAME}
   spec:
     replicas: 1
     selector:
-      app: {{.application}}
-      deploymentconfig: {{.serviceName}}
-    strategy:
-      resources: {}
+      matchLabels:
+        app: ${PROJECT_NAME}
     template:
       metadata:
-        creationTimestamp: null
         labels:
-          app: {{.application}}
-          deploymentconfig: {{.serviceName}}
+          app: ${PROJECT_NAME}
       spec:
         containers:
-        - image: {{.serviceName}}:latest
-          name: {{.serviceName}}
+        - name: ${PROJECT_NAME}
+          image: ${CLUSTER_IP}:5000/${PROJECT_NAME}
           ports:
           - containerPort: 8778
             protocol: TCP
           - containerPort: 8080
-            protocol: TCP
-          - containerPort: 8443
-            protocol: TCP
-          resources: {}
-    test: false
-    triggers:
-    - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - {{.serviceName}}
-        from:
-          kind: ImageStreamTag
-          name: {{.serviceName}}:latest
-      type: ImageChange
-  status:
-    availableReplicas: 0
-    latestVersion: 0
-    observedGeneration: 0
-    replicas: 0
-    unavailableReplicas: 0
-    updatedReplicas: 0
 - apiVersion: v1
   kind: Service
   metadata:
     creationTimestamp: null
     labels:
       app: {{.application}}
-    name: {{.serviceName}}
+    name: ${PROJECT_NAME}
   spec:
     ports:
     - name: 8080-tcp
@@ -140,20 +46,36 @@ objects:
       targetPort: 8778
     selector:
       app: {{.application}}
-      deploymentconfig: {{.serviceName}}
+      deploymentconfig: ${PROJECT_NAME}
   status:
     loadBalancer: {}
-parameters:
-- name: SOURCE_REPOSITORY_URL
-  description: The source URL for the application
-  displayName: Source URL
-  value: https://github.com/dummy_org/dummy_repo
-  required: true
-- name: GITHUB_WEBHOOK_SECRET
-  description: The secret used to configure a GitHub webhook
-  displayName: GitHub Webhook Secret
-  required: true
-  from: '[a-zA-Z0-9]{40}'
-  generate: expression
-apiVersion: template.openshift.io/v1
+- apiVersion: tekton.dev/v1alpha1
+  kind: TaskRun
+  metadata:
+    name: s2i-${PROJECT_NAME}-taskrun
+  spec:
+    taskRef:
+      name: s2i
+    inputs:
+      params:
+      - name: BUILDER_IMAGE
+        value: registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift
+      - name: TLSVERIFY
+        value: "false"
+      resources:
+      - name: source
+        resourceSpec:
+          type: git
+          params:
+          - name: url
+            value: https://github.com/dummy_org/dummy_repo
+    outputs:
+      resources:
+      - name: image
+        resourceSpec:
+          type: image
+          params:
+          - name: url
+            value: registry.docker-registry:5000/${PROJECT_NAME}
+apiVersion: v1
 kind: Template
