@@ -120,3 +120,26 @@ private fun filterAnnotations(container: Properties?) {
         }
     }
 }
+
+fun taskRun(appName: String, gitUrl: String?): Resource {
+    val text = streamFromPath(templatePath("taskrun")).reader().readText()
+        .replace(dummyNameRe, appName)
+
+    return if (gitUrl == null) {
+        val resource = Resources(yamlIo.objectFromString(text) as Properties)
+        val spec = resource.json.spec
+        property(spec, "taskRef")["name"] = "s2i-local"
+        property(spec, "inputs").remove("resources")
+        resource.json
+    } else {
+        val newText = text.replace(dummyGitUrl, gitUrl)
+        Resources(yamlIo.objectFromString(newText) as Properties).json
+    }
+}
+
+private fun property(spec: Properties?, name: String) =
+    spec?.get(name) as HashMap<String, String>
+
+    val resources = Resources(obj as Properties)
+    (resources.json as TemplateResource).objects.add(taskRun(appName, gitUrl))
+    return resources

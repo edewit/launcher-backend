@@ -55,6 +55,7 @@ interface Resource : BaseProperties {
     var apiVersion: String?
     var kind: String?
     var metadata: Metadata?
+    var spec: Properties?
 
     companion object {
         @JvmOverloads fun build(_map: Properties = propsOf(), block: Data.() -> Unit = {}) =
@@ -65,6 +66,7 @@ interface Resource : BaseProperties {
         override var apiVersion: String? by _map
         override var kind: String? by _map
         override var metadata: Metadata? by _map
+        override var spec: Properties? by _map
         fun metadata_(block: Metadata.Data.() -> Unit) {
             metadata = Metadata.build(block = block)
         }

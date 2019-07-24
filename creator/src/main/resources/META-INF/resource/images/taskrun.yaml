@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: s2i-${PROJECT_NAME}-taskrun
+spec:
+  taskRef:
+    name: s2i
+  inputs:
+    params:
+    - name: BUILDER_IMAGE
+      value: nodeshift/centos7-s2i-nodejs
+    - name: TLSVERIFY
+      value: "false"
+    resources:
+    - name: source
+      resourceSpec:
+        type: git
+        params:
+        - name: url
+          value: https://github.com/dummy_org/dummy_repo
+
+  outputs:
+    resources:
+    - name: image
+      resourceSpec:
+        type: image
+        params:
+        - name: url
+          value: registry.docker-registry:5000/${PROJECT_NAME}
