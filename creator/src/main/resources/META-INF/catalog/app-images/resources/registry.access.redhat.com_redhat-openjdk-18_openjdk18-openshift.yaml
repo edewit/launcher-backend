@@ -8,23 +8,23 @@ objects:
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
-    name: ${PROJECT_NAME}-deployment
-    namespace: ${PROJECT_NAME}
+    name: {{.serviceName}}-deployment
+    namespace: {{.serviceName}}
     labels:
-      app: ${PROJECT_NAME}
+      app: {{.serviceName}}
   spec:
     replicas: 1
     selector:
       matchLabels:
-        app: ${PROJECT_NAME}
+        app: {{.serviceName}}
     template:
       metadata:
         labels:
-          app: ${PROJECT_NAME}
+          app: {{.serviceName}}
       spec:
         containers:
-        - name: ${PROJECT_NAME}
-          image: ${CLUSTER_IP}:5000/${PROJECT_NAME}
+        - name: {{.serviceName}}
+          image: ${CLUSTER_IP}:5000/{{.serviceName}}
           ports:
           - containerPort: 8778
             protocol: TCP
@@ -35,8 +35,9 @@ objects:
     creationTimestamp: null
     labels:
       app: {{.application}}
-    name: ${PROJECT_NAME}
+    name: {{.serviceName}}
   spec:
+    type: NodePort
     ports:
     - name: 8080-tcp
       port: 8080
@@ -52,7 +53,7 @@ objects:
       targetPort: 8778
     selector:
       app: {{.application}}
-      deploymentconfig: ${PROJECT_NAME}
+      deploymentconfig: {{.serviceName}}
   status:
     loadBalancer: {}
 apiVersion: v1
