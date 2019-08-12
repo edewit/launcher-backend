@@ -59,7 +59,8 @@ function do_push() {
         rm -rf ${FROM}
     elif [[ "$1" == "--source" || "$1" == "-s" ]]; then
         shift
-        oc start-build ${SERVICE_NAME} --from-dir ${SOURCE_DIR} "$@"
+        sync_build
+        restart_build
         RES=$?
     elif [[ "$1" == "--git" || "$1" == "-g" ]]; then
         shift
@@ -79,6 +80,20 @@ function do_push() {
         fi
     fi
     (exit $RES)
+}
+
+function sync_build() {
+    shopt -s dotglob
+    for f in ${SOURCE_DIR}/*
+    do
+        echo "copy $f file..."
+        kubectl cp $f source-pod:/tmp/source
+    done
+}
+
+function restart_build() {
+    kubectl delete -f ${OPENSHIFTIO_DIR}/s2i-taskrun.yaml
+    kubectl apply -f ${OPENSHIFTIO_DIR}/s2i-taskrun.yaml
 }
 
 function do_delete() {

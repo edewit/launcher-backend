@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: s2i-{{.application}}-taskrun
+spec:
+  taskRef:
+    name: s2i-local
+  inputs:
+    params:
+    - name: BUILDER_IMAGE
+      value: {{.image}}
+    - name: TLSVERIFY
+      value: "false"
+  outputs:
+    resources:
+    - name: image
+      resourceSpec:
+        type: image
+        params:
+        - name: url
+          value: registry.docker-registry:5000/{{.application}}

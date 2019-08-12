@@ -1,0 +1,114 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: s2i-local
+spec:
+  inputs:
+    params:
+    - name: BUILDER_IMAGE
+      description: The location of the s2i builder image.
+    - name: PATH_CONTEXT
+      description: The location of the path to run s2i from.
+      default: .
+    - name: TLSVERIFY
+      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
+      default: "true"
+
+  outputs:
+    resources:
+    - name: image
+      type: image
+
+  steps:
+  - name: generate
+    image: quay.io/openshift-pipeline/s2i
+    workingdir: /workspace/source
+    command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', '${inputs.params.BUILDER_IMAGE}', '--image-scripts-url', 'image:///usr/local/s2i', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+    volumeMounts:
+    - name: gen-source
+      mountPath: /gen-source
+    - name: source
+      mountPath: /workspace/source
+  - name: build
+    image: quay.io/openshift-pipeline/buildah
+    workingdir: /gen-source
+    command: ['buildah', 'bud', '--tls-verify=${inputs.params.TLSVERIFY}', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '${outputs.resources.image.url}', '.']
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    - name: gen-source
+      mountPath: /gen-source
+    securityContext:
+      privileged: true
+
+  - name: push
+    image: quay.io/openshift-pipeline/buildah
+    command: ['buildah', 'push', '--tls-verify=${inputs.params.TLSVERIFY}', '${outputs.resources.image.url}', 'docker://${outputs.resources.image.url}']
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}
+  - name: gen-source
+    emptyDir: {}
+  - name: source
+    persistentVolumeClaim:
+      claimName: local-claim
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-claim
+  finalizers: []
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: local
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: source-pod
+spec:
+  containers:
+  - name: source-container
+    image: centos:7
+    command:
+    - "bin/bash"
+    - "-c"
+    - "sleep 10000"
+    volumeMounts:
+    - name: local
+      mountPath: "/tmp/source"
+  volumes:
+  - name: local
+    persistentVolumeClaim:
+      claimName: local-claim
