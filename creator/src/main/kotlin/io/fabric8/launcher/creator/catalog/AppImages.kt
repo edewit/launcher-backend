@@ -40,9 +40,6 @@ class AppImages(info: GeneratorInfo, ctx: GeneratorContext) : BaseGenerator(info
         }
         setBuildContextDir(res, biprops.subFolderName)
         resources.add(res)
-        if (biprops.routeName != null) {
-            newRoute(resources, biprops.routeName!!, biprops.application, biprops.serviceName)
-        }
         return resources
     }
 }
