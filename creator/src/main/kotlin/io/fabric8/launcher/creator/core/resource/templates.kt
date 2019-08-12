@@ -8,9 +8,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-private const val dummyName = "\\$\\{PROJECT_NAME}"
+private const val dummyName = "placeholder-app-name-730040e0c873453f877c10cd07912d1f"
 private const val dummyLabel = "placeholder-app-label-d46881878f594a2dadfd963843452aab"
-private val dummyNameRe = dummyName.toRegex(RegexOption.DOT_MATCHES_ALL)
+private val dummyNameRe = dummyName.toRegex(RegexOption.LITERAL)
 private val dummyLabelRe = dummyLabel.toRegex(RegexOption.LITERAL)
 private const val dummyGitUrl = "https://github.com/dummy_org/dummy_repo"
 
@@ -120,26 +120,3 @@ private fun filterAnnotations(container: Properties?) {
         }
     }
 }
-
-fun taskRun(appName: String, gitUrl: String?): Resource {
-    val text = streamFromPath(templatePath("taskrun")).reader().readText()
-        .replace(dummyNameRe, appName)
-
-    return if (gitUrl == null) {
-        val resource = Resources(yamlIo.objectFromString(text) as Properties)
-        val spec = resource.json.spec
-        property(spec, "taskRef")["name"] = "s2i-local"
-        property(spec, "inputs").remove("resources")
-        resource.json
-    } else {
-        val newText = text.replace(dummyGitUrl, gitUrl)
-        Resources(yamlIo.objectFromString(newText) as Properties).json
-    }
-}
-
-private fun property(spec: Properties?, name: String) =
-    spec?.get(name) as HashMap<String, String>
-
-    val resources = Resources(obj as Properties)
-    (resources.json as TemplateResource).objects.add(taskRun(appName, gitUrl))
-    return resources
