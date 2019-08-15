@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: pipeline
+spec:
+  resources:
+  - name: image
+    type: image
+  tasks:
+  - name: build
+    taskRef:
+      name: s2i-local
+    params:
+    - name: BUILDER_IMAGE
+      description: The location of the s2i builder image.
+    - name: TLSVERIFY
+      value: "false"
+    resources:
+      outputs:
+      - name: image
+        resource: image
+  - name: deploy
+    taskRef:
+      name: deploy-task
+    resources:
+      inputs:
+      - name: image
+        resource: image
+        from:
+        - build
+    params:
+    - name: path
+      value: /workspace/source/.openshiftio/application.yaml

@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: deploy-task
+spec:
+  inputs:
+    resources:
+    - name: image
+      type: image
+    params:
+    - name: path
+      description: Path to the manifest to apply
+  steps:
+  - name: run-kubectl
+    image: lachlanevenson/k8s-kubectl
+    command: ["kubectl"]
+    args:
+      - "apply"
+      - "-f"
+      - "${inputs.params.path}"
+    volumeMounts:
+    - name: source
+      mountPath: /workspace/source
+  volumes:
+  - name: source
+    persistentVolumeClaim:
+      claimName: local-claim

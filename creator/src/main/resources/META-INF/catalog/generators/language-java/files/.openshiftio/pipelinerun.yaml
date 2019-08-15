@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: image-location
+spec:
+  type: image
+  params:
+  - name: url
+    value: {{.image}}
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: name: s2i-{{.application}}-pipelinerun
+spec:
+  pipelineRef:
+    name: pipeline
+  trigger:
+    type: manual
+  resources:
+  - name: image
+    resourceRef:
+      name: image-location

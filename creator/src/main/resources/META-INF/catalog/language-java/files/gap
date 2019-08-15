@@ -92,8 +92,8 @@ function sync_build() {
 }
 
 function restart_build() {
-    kubectl delete -f ${OPENSHIFTIO_DIR}/s2i-taskrun.yaml
-    kubectl apply -f ${OPENSHIFTIO_DIR}/s2i-taskrun.yaml
+    kubectl delete -f ${OPENSHIFTIO_DIR}/pipelinerun.yaml
+    kubectl apply -f ${OPENSHIFTIO_DIR}/pipelinerun.yaml
 }
 
 function do_delete() {
